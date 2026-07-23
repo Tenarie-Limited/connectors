@@ -1,0 +1,98 @@
+{
+  "name": "DigitalOcean Insecure Firewall Ports Check",
+  "description": "Creates tasks when DigitalOcean firewall inbound rules expose FTP or Telnet to the public internet on ports 21 or 23.",
+  "status": "active",
+  "definition_json": {
+    "trigger": {
+      "mode": "manual"
+    },
+    "connector": {
+      "family": "",
+      "config_id": ""
+    },
+    "steps": [
+      {
+        "step_key": "get_1",
+        "step_type": "connector_get",
+        "request": {
+          "path": "/v2/firewalls",
+          "query_params": {
+            "per_page": 100
+          }
+        },
+        "limits": {
+          "timeout_seconds": 30,
+          "max_response_bytes": 1048576
+        },
+        "pagination": {
+          "mode": "page_number",
+          "page_param": "page",
+          "start_page": 1,
+          "max_pages": 5
+        },
+        "response_handling": {
+          "records_path": "firewalls",
+          "child_records_path": "inbound_rules",
+          "preserved_parent_fields": [
+            "id",
+            "name",
+            "status"
+          ]
+        },
+        "normalization": {
+          "mode": "records_contract_v1"
+        },
+        "auth_reference_id": "__use_default__",
+        "output_alias": "get_1"
+      },
+      {
+        "step_key": "filter_1",
+        "step_type": "filter_rule",
+        "input_source": "get_1.records",
+        "output_alias": "filter_1",
+        "match_policy": "any",
+        "rules": [
+          {
+            "field": "sources.addresses",
+            "operator": "contains",
+            "value": "0.0.0.0/0"
+          },
+          {
+            "field": "sources.addresses",
+            "operator": "contains",
+            "value": "::/0"
+          }
+        ]
+      },
+      {
+        "step_key": "filter_2",
+        "step_type": "filter_rule",
+        "input_source": "filter_1.records",
+        "output_alias": "filter_2",
+        "match_policy": "any",
+        "rules": [
+          {
+            "field": "ports",
+            "operator": "contains",
+            "value": "21"
+          },
+          {
+            "field": "ports",
+            "operator": "contains",
+            "value": "23"
+          }
+        ]
+      },
+      {
+        "step_key": "route_1",
+        "step_type": "destination_task_create",
+        "record_source": "filter_2.records",
+        "mapping": {
+          "task_title_template": "DigitalOcean firewall {{ record.parent_context.name }} exposes insecure port {{ record.ports }}",
+          "additional_information_template": "Firewall {{ record.parent_context.name }} ({{ record.parent_context.id }}) currently allows public inbound access to {{ record.protocol|default:'unknown protocol' }} port {{ record.ports }} from {{ record.sources.addresses|default:'unknown sources' }}. Review the inbound rule and remove FTP or Telnet exposure where it is not explicitly required.",
+          "owner_user_id": ""
+        }
+      }
+    ]
+  }
+}

@@ -1,0 +1,34 @@
+{
+  "firewalls": [
+    {
+      "id": "aaaaaaaa-bbbb-4ccc-8ddd-eeeeeeeeeeee",
+      "name": "sanitized-compliant-firewall",
+      "status": "succeeded",
+      "inbound_rules": [
+        {
+          "protocol": "tcp",
+          "ports": "443",
+          "sources": {
+            "addresses": [
+              "0.0.0.0/0",
+              "::/0"
+            ]
+          }
+        },
+        {
+          "protocol": "tcp",
+          "ports": "21",
+          "sources": {
+            "addresses": [
+              "10.0.0.0/8"
+            ]
+          }
+        }
+      ]
+    }
+  ],
+  "links": {},
+  "meta": {
+    "total": 1
+  }
+}

@@ -1,0 +1,25 @@
+{
+  "firewalls": [
+    {
+      "id": "11111111-2222-4333-8444-555555555555",
+      "name": "sanitized-example-firewall",
+      "status": "succeeded",
+      "inbound_rules": [
+        {
+          "protocol": "tcp",
+          "ports": "21",
+          "sources": {
+            "addresses": [
+              "0.0.0.0/0",
+              "::/0"
+            ]
+          }
+        }
+      ]
+    }
+  ],
+  "links": {},
+  "meta": {
+    "total": 1
+  }
+}

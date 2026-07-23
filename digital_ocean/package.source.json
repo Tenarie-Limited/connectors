@@ -1,0 +1,32 @@
+{
+  "schema_version": "connector_bundle.v1",
+  "package_type": "connector_bundle",
+  "connector": {
+    "name": "DigitalOcean Firewall Connector",
+    "description": "Preview DigitalOcean Custom API connector for firewall monitoring workflows.",
+    "family": "custom_api",
+    "status": "active",
+    "base_url": "https://api.digitalocean.com",
+    "config_json": {
+      "provider_key": "digital_ocean"
+    },
+    "default_auth_key": "digitalocean_default_token"
+  },
+  "auth_references": [
+    {
+      "key": "digitalocean_default_token",
+      "name": "DigitalOcean Bearer Token",
+      "status": "active",
+      "auth_mode": "static_bearer",
+      "secret_backend": "environment",
+      "secret_bindings_json": {
+        "token": "DIGITAL_OCEAN_TOKEN"
+      },
+      "public_config_json": {}
+    }
+  ],
+  "legacy_compatibility_artifact": true,
+  "workflow_files": [
+    "workflows/insecure_firewall_ports.workflow.json"
+  ]
+}
