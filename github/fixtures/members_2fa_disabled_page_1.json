@@ -1,0 +1,42 @@
+[
+  {
+    "login": "example-user-one",
+    "id": 41001,
+    "node_id": "MDQ6VXNlcjQxMDAx",
+    "avatar_url": "https://avatars.example.test/u/41001",
+    "gravatar_id": "",
+    "url": "https://api.github.example.test/users/example-user-one",
+    "html_url": "https://github.example.test/example-user-one",
+    "followers_url": "https://api.github.example.test/users/example-user-one/followers",
+    "following_url": "https://api.github.example.test/users/example-user-one/following{/other_user}",
+    "gists_url": "https://api.github.example.test/users/example-user-one/gists{/gist_id}",
+    "starred_url": "https://api.github.example.test/users/example-user-one/starred{/owner}{/repo}",
+    "subscriptions_url": "https://api.github.example.test/users/example-user-one/subscriptions",
+    "organizations_url": "https://api.github.example.test/users/example-user-one/orgs",
+    "repos_url": "https://api.github.example.test/users/example-user-one/repos",
+    "events_url": "https://api.github.example.test/users/example-user-one/events{/privacy}",
+    "received_events_url": "https://api.github.example.test/users/example-user-one/received_events",
+    "type": "User",
+    "site_admin": false
+  },
+  {
+    "login": "example-user-two",
+    "id": 41002,
+    "node_id": "MDQ6VXNlcjQxMDAy",
+    "avatar_url": "https://avatars.example.test/u/41002",
+    "gravatar_id": "",
+    "url": "https://api.github.example.test/users/example-user-two",
+    "html_url": "https://github.example.test/example-user-two",
+    "followers_url": "https://api.github.example.test/users/example-user-two/followers",
+    "following_url": "https://api.github.example.test/users/example-user-two/following{/other_user}",
+    "gists_url": "https://api.github.example.test/users/example-user-two/gists{/gist_id}",
+    "starred_url": "https://api.github.example.test/users/example-user-two/starred{/owner}{/repo}",
+    "subscriptions_url": "https://api.github.example.test/users/example-user-two/subscriptions",
+    "organizations_url": "https://api.github.example.test/users/example-user-two/orgs",
+    "repos_url": "https://api.github.example.test/users/example-user-two/repos",
+    "events_url": "https://api.github.example.test/users/example-user-two/events{/privacy}",
+    "received_events_url": "https://api.github.example.test/users/example-user-two/received_events",
+    "type": "User",
+    "site_admin": false
+  }
+]

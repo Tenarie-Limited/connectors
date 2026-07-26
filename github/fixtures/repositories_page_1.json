@@ -1,0 +1,90 @@
+[
+  {
+    "id": 1001,
+    "node_id": "R_kgDO_private",
+    "name": "security-platform",
+    "full_name": "example-org/security-platform",
+    "private": true,
+    "visibility": "private",
+    "owner": {
+      "login": "example-org",
+      "id": 501,
+      "avatar_url": "https://avatars.githubusercontent.com/u/501"
+    },
+    "default_branch": "main",
+    "archived": false,
+    "disabled": false,
+    "fork": false,
+    "topics": [
+      "tenarie-private",
+      "security"
+    ],
+    "pushed_at": "2026-07-20T01:00:00Z",
+    "updated_at": "2026-07-20T01:05:00Z",
+    "permissions": {
+      "admin": true,
+      "push": true,
+      "pull": true
+    },
+    "clone_url": "https://github.com/example-org/security-platform.git",
+    "ssh_url": "git@github.com:example-org/security-platform.git",
+    "temp_clone_token": "must-not-reach-core"
+  },
+  {
+    "id": 1002,
+    "node_id": "R_kgDO_public",
+    "name": "public-docs",
+    "full_name": "example-org/public-docs",
+    "private": false,
+    "visibility": "public",
+    "owner": {
+      "login": "example-org",
+      "id": 501,
+      "avatar_url": "https://avatars.githubusercontent.com/u/501"
+    },
+    "default_branch": "main",
+    "archived": false,
+    "disabled": false,
+    "fork": false,
+    "topics": [
+      "documentation"
+    ],
+    "pushed_at": "2026-07-21T02:00:00Z",
+    "updated_at": "2026-07-21T02:05:00Z",
+    "permissions": {
+      "admin": true,
+      "push": true,
+      "pull": true
+    },
+    "clone_url": "https://github.com/example-org/public-docs.git"
+  },
+  {
+    "id": 1003,
+    "node_id": "R_kgDO_exposed",
+    "name": "customer-integration",
+    "full_name": "example-org/customer-integration",
+    "private": false,
+    "visibility": "public",
+    "owner": {
+      "login": "example-org",
+      "id": 501,
+      "avatar_url": "https://avatars.githubusercontent.com/u/501"
+    },
+    "default_branch": "main",
+    "archived": false,
+    "disabled": false,
+    "fork": false,
+    "topics": [
+      "tenarie-private",
+      "integration"
+    ],
+    "pushed_at": "2026-07-22T03:00:00Z",
+    "updated_at": "2026-07-22T03:05:00Z",
+    "permissions": {
+      "admin": true,
+      "push": true,
+      "pull": true
+    },
+    "clone_url": "https://github.com/example-org/customer-integration.git"
+  }
+]

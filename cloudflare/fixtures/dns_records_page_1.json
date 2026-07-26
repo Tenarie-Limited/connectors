@@ -1,0 +1,51 @@
+{
+  "success": true,
+  "errors": [],
+  "messages": [],
+  "result": [
+    {
+      "id": "372e67954025e0ba6aaa6d586b9e0b59",
+      "name": "origin.example.com",
+      "type": "A",
+      "content": "192.0.2.10",
+      "ttl": 300,
+      "proxied": false,
+      "proxiable": true,
+      "modified_on": "2026-07-20T05:10:00Z",
+      "comment": "Internal origin",
+      "tags": [
+        "owner:platform"
+      ],
+      "meta": {
+        "auto_added": false
+      }
+    },
+    {
+      "id": "1860f2f6543a4e98b1c1d8b795f17019",
+      "name": "www.example.com",
+      "type": "CNAME",
+      "content": "edge.example.net",
+      "ttl": 1,
+      "proxied": true,
+      "proxiable": true,
+      "modified_on": "2026-07-20T05:12:00Z"
+    },
+    {
+      "id": "a2f23b3fa43f48aa8cf1b90c1f3dbd17",
+      "name": "example.com",
+      "type": "TXT",
+      "content": "provider-verification=secret-placeholder",
+      "ttl": 300,
+      "proxied": false,
+      "proxiable": false,
+      "modified_on": "2026-07-20T05:15:00Z"
+    }
+  ],
+  "result_info": {
+    "page": 1,
+    "per_page": 100,
+    "count": 3,
+    "total_count": 3,
+    "total_pages": 1
+  }
+}

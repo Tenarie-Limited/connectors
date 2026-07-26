@@ -2,8 +2,8 @@
   "schema_version": "connector_bundle.v1",
   "package_type": "connector_bundle",
   "connector": {
-    "name": "DigitalOcean Firewall Connector",
-    "description": "Preview DigitalOcean Custom API connector for firewall monitoring workflows.",
+    "name": "DigitalOcean Connector",
+    "description": "Read-only DigitalOcean connector for cloud resource inventory and security review workflows.",
     "family": "custom_api",
     "status": "active",
     "base_url": "https://api.digitalocean.com",
@@ -27,6 +27,17 @@
   ],
   "legacy_compatibility_artifact": true,
   "workflow_files": [
-    "workflows/insecure_firewall_ports.workflow.json"
+    "workflows/database_inventory.workflow.json",
+    "workflows/database_public_trusted_sources.workflow.json",
+    "workflows/droplet_inventory.workflow.json",
+    "workflows/firewall_inventory.workflow.json",
+    "workflows/insecure_firewall_ports.workflow.json",
+    "workflows/load_balancer_errored.workflow.json",
+    "workflows/load_balancer_http_redirect_review.workflow.json",
+    "workflows/load_balancer_inventory.workflow.json",
+    "workflows/load_balancer_without_targets.workflow.json",
+    "workflows/monitoring_alert_policy_inventory.workflow.json",
+    "workflows/monitoring_disabled_alert_policies.workflow.json",
+    "workflows/monitoring_untargeted_alert_policies.workflow.json"
   ]
 }

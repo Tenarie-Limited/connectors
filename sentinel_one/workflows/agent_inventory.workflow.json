@@ -1,0 +1,148 @@
+{
+  "name": "SentinelOne Agent Inventory",
+  "description": "Creates and synchronizes one Tenarie infrastructure Asset for each SentinelOne Agent returned within the configured bounded scope.",
+  "status": "draft",
+  "definition_json": {
+    "trigger": {
+      "mode": "manual"
+    },
+    "connector": {
+      "family": "",
+      "config_id": ""
+    },
+    "collection_cycle": {
+      "enabled": true,
+      "max_batches": 3
+    },
+    "steps": [
+      {
+        "step_key": "get_1",
+        "step_type": "connector_get",
+        "request": {
+          "path": "/web/api/v2.1/agents",
+          "query_params": {}
+        },
+        "limits": {
+          "timeout_seconds": 30,
+          "max_response_bytes": 1048576
+        },
+        "pagination": {
+          "mode": "offset_limit",
+          "offset_param": "skip",
+          "limit_param": "limit",
+          "start_offset": 0,
+          "omit_initial_offset": true,
+          "page_size": 100,
+          "max_pages": 5,
+          "continuation": {
+            "enabled": true,
+            "max_partitions": 3
+          }
+        },
+        "response_handling": {
+          "records_path": "data"
+        },
+        "normalization": {
+          "mode": "records_contract_v1",
+          "field_mappings": [
+            {
+              "output_field": "computer_name",
+              "source_path": "computerName"
+            },
+            {
+              "output_field": "agent_version",
+              "source_path": "agentVersion"
+            },
+            {
+              "output_field": "os_name",
+              "source_path": "osName"
+            },
+            {
+              "output_field": "os_arch",
+              "source_path": "osArch"
+            },
+            {
+              "output_field": "site_name",
+              "source_path": "siteName"
+            },
+            {
+              "output_field": "group_name",
+              "source_path": "groupName"
+            },
+            {
+              "output_field": "registered_at",
+              "source_path": "registeredAt"
+            },
+            {
+              "output_field": "last_active_date",
+              "source_path": "lastActiveDate"
+            },
+            {
+              "output_field": "is_active",
+              "source_path": "isActive"
+            },
+            {
+              "output_field": "is_up_to_date",
+              "source_path": "isUpToDate"
+            },
+            {
+              "output_field": "network_status",
+              "source_path": "networkStatus"
+            },
+            {
+              "output_field": "is_pending_uninstall",
+              "source_path": "isPendingUninstall"
+            },
+            {
+              "output_field": "is_uninstalled",
+              "source_path": "isUninstalled"
+            },
+            {
+              "output_field": "is_decommissioned",
+              "source_path": "isDecommissioned"
+            },
+            {
+              "output_field": "active_protection",
+              "source_path": "activeProtection"
+            }
+          ],
+          "field_allowlist": [
+            "id",
+            "computer_name",
+            "agent_version",
+            "os_name",
+            "os_arch",
+            "site_name",
+            "group_name",
+            "registered_at",
+            "last_active_date",
+            "is_active",
+            "is_up_to_date",
+            "network_status",
+            "is_pending_uninstall",
+            "is_uninstalled",
+            "is_decommissioned",
+            "active_protection"
+          ]
+        },
+        "auth_reference_id": "__use_default__",
+        "output_alias": "get_1"
+      },
+      {
+        "step_key": "route_1",
+        "step_type": "destination_asset_create",
+        "record_source": "get_1.records",
+        "mapping": {
+          "external_system": "sentinel_one",
+          "external_id_template": "{{ record.id }}",
+          "title_template": "{{ record.computer_name|default:'SentinelOne Agent' }}",
+          "asset_type": "infrastructure",
+          "description_template": "SentinelOne Agent {{ record.id }}. Computer name: {{ record.computer_name|default:'not returned' }}. Agent version: {{ record.agent_version|default:'not returned' }}. Operating system: {{ record.os_name|default:'not returned' }} {{ record.os_arch|default:'' }}. Site: {{ record.site_name|default:'not returned' }}. Group: {{ record.group_name|default:'not returned' }}. Registered: {{ record.registered_at|default:'not returned' }}. Last active: {{ record.last_active_date|default:'not returned' }}. Active: {{ record.is_active|default:'not returned' }}. Up to date: {{ record.is_up_to_date|default:'not returned' }}. Network status: {{ record.network_status|default:'not returned' }}. Pending uninstall: {{ record.is_pending_uninstall|default:'not returned' }}. Uninstalled: {{ record.is_uninstalled|default:'not returned' }}. Decommissioned: {{ record.is_decommissioned|default:'not returned' }}. Active protection: {{ record.active_protection|default:'not returned' }}.",
+          "notes_template": "",
+          "owner_user_id": "",
+          "synchronization_mode": "provider_managed"
+        }
+      }
+    ]
+  }
+}

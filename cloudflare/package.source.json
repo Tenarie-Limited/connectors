@@ -1,0 +1,35 @@
+{
+  "schema_version": "connector_bundle.v1",
+  "package_type": "connector_bundle",
+  "connector": {
+    "name": "Cloudflare Connector",
+    "description": "Read-only Cloudflare connector for zone inventory, encryption-mode review, and selected DNS security reviews.",
+    "family": "custom_api",
+    "status": "active",
+    "base_url": "https://api.cloudflare.com",
+    "config_json": {
+      "provider_key": "cloudflare"
+    },
+    "default_auth_key": "cloudflare_default_token"
+  },
+  "auth_references": [
+    {
+      "key": "cloudflare_default_token",
+      "name": "Cloudflare API Token",
+      "status": "active",
+      "auth_mode": "static_bearer",
+      "secret_backend": "environment",
+      "secret_bindings_json": {
+        "token": "CLOUDFLARE_API_TOKEN"
+      },
+      "public_config_json": {}
+    }
+  ],
+  "workflow_files": [
+    "workflows/dnssec_status_review.workflow.json",
+    "workflows/encryption_mode_review.workflow.json",
+    "workflows/unproxied_dns_records_review.workflow.json",
+    "workflows/zone_inventory.workflow.json",
+    "workflows/zone_status_review.workflow.json"
+  ]
+}

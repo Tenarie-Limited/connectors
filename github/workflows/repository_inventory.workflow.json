@@ -1,0 +1,87 @@
+{
+  "name": "GitHub Repository Inventory",
+  "description": "Creates or reuses one Tenarie Asset for each GitHub repository available to the connected token and reports its current visibility.",
+  "status": "active",
+  "definition_json": {
+    "trigger": {
+      "mode": "manual"
+    },
+    "connector": {
+      "family": "",
+      "config_id": ""
+    },
+    "steps": [
+      {
+        "step_key": "get_1",
+        "step_type": "connector_get",
+        "request": {
+          "path": "/user/repos",
+          "query_params": {
+            "visibility": "all",
+            "affiliation": "owner,collaborator,organization_member",
+            "sort": "full_name",
+            "direction": "asc",
+            "per_page": 50
+          }
+        },
+        "limits": {
+          "timeout_seconds": 30,
+          "max_response_bytes": 1048576
+        },
+        "pagination": {
+          "mode": "page_number",
+          "page_param": "page",
+          "start_page": 1,
+          "max_pages": 1,
+          "continuation": {
+            "enabled": true,
+            "max_partitions": 20
+          }
+        },
+        "response_handling": {
+          "records_path": "$"
+        },
+        "normalization": {
+          "mode": "records_contract_v1",
+          "field_mappings": [
+            {
+              "output_field": "owner_login",
+              "source_path": "owner.login"
+            }
+          ],
+          "field_allowlist": [
+            "id",
+            "name",
+            "full_name",
+            "owner_login",
+            "private",
+            "visibility",
+            "default_branch",
+            "archived",
+            "disabled",
+            "fork",
+            "topics",
+            "pushed_at",
+            "updated_at"
+          ]
+        },
+        "auth_reference_id": "__use_default__",
+        "output_alias": "get_1"
+      },
+      {
+        "step_key": "route_1",
+        "step_type": "destination_asset_create",
+        "record_source": "get_1.records",
+        "mapping": {
+          "external_system": "github",
+          "external_id_template": "{{ record.id }}",
+          "title_template": "GitHub Repository {{ record.full_name }}",
+          "asset_type": "application",
+          "description_template": "GitHub repository {{ record.full_name }} with current visibility {{ record.visibility|default:'not returned' }}.",
+          "notes_template": "Owner: {{ record.owner_login|default:'not returned' }}. Default branch: {{ record.default_branch|default:'not returned' }}. Private: {{ record.private|default:'not returned' }}. Archived: {{ record.archived|default:'not returned' }}. Disabled: {{ record.disabled|default:'not returned' }}. Fork: {{ record.fork|default:'not returned' }}. Topics: {{ record.topics|default:'none returned' }}. Last push: {{ record.pushed_at|default:'not returned' }}. Last updated: {{ record.updated_at|default:'not returned' }}.",
+          "owner_user_id": ""
+        }
+      }
+    ]
+  }
+}

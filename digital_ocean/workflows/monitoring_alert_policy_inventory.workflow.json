@@ -1,0 +1,69 @@
+{
+  "name": "DigitalOcean Alert Policy Inventory",
+  "description": "Creates or reuses one Tenarie Asset for each DigitalOcean Monitoring alert policy while excluding notification recipients and integration details.",
+  "status": "active",
+  "definition_json": {
+    "trigger": {
+      "mode": "manual"
+    },
+    "connector": {
+      "family": "",
+      "config_id": ""
+    },
+    "steps": [
+      {
+        "step_key": "get_1",
+        "step_type": "connector_get",
+        "request": {
+          "path": "/v2/monitoring/alerts",
+          "query_params": {
+            "per_page": 100
+          }
+        },
+        "limits": {
+          "timeout_seconds": 30,
+          "max_response_bytes": 1048576
+        },
+        "pagination": {
+          "mode": "page_number",
+          "page_param": "page",
+          "start_page": 1,
+          "max_pages": 5
+        },
+        "response_handling": {
+          "records_path": "policies"
+        },
+        "normalization": {
+          "mode": "records_contract_v1",
+          "field_allowlist": [
+            "uuid",
+            "description",
+            "enabled",
+            "type",
+            "compare",
+            "value",
+            "window",
+            "entities",
+            "tags"
+          ]
+        },
+        "auth_reference_id": "__use_default__",
+        "output_alias": "get_1"
+      },
+      {
+        "step_key": "route_1",
+        "step_type": "destination_asset_create",
+        "record_source": "get_1.records",
+        "mapping": {
+          "external_system": "digital_ocean",
+          "external_id_template": "{{ record.uuid }}",
+          "title_template": "DigitalOcean Alert Policy {{ record.description }}",
+          "asset_type": "process",
+          "description_template": "DigitalOcean Monitoring alert policy {{ record.description }} ({{ record.uuid }}).",
+          "notes_template": "Enabled: {{ record.enabled }}. Type: {{ record.type }}. Threshold: {{ record.compare }} {{ record.value }} over {{ record.window }}. Entity targets: {{ record.entities|default:'none returned' }}. Tag targets: {{ record.tags|default:'none returned' }}.",
+          "owner_user_id": ""
+        }
+      }
+    ]
+  }
+}

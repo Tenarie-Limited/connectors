@@ -1,0 +1,58 @@
+{
+  "name": "DigitalOcean Droplet Inventory",
+  "description": "Creates or reuses one Tenarie Asset for each standard DigitalOcean Droplet returned by the account.",
+  "status": "active",
+  "definition_json": {
+    "trigger": {
+      "mode": "manual"
+    },
+    "connector": {
+      "family": "",
+      "config_id": ""
+    },
+    "steps": [
+      {
+        "step_key": "get_1",
+        "step_type": "connector_get",
+        "request": {
+          "path": "/v2/droplets",
+          "query_params": {
+            "per_page": 100
+          }
+        },
+        "limits": {
+          "timeout_seconds": 30,
+          "max_response_bytes": 1048576
+        },
+        "pagination": {
+          "mode": "page_number",
+          "page_param": "page",
+          "start_page": 1,
+          "max_pages": 5
+        },
+        "response_handling": {
+          "records_path": "droplets"
+        },
+        "normalization": {
+          "mode": "records_contract_v1"
+        },
+        "auth_reference_id": "__use_default__",
+        "output_alias": "get_1"
+      },
+      {
+        "step_key": "route_1",
+        "step_type": "destination_asset_create",
+        "record_source": "get_1.records",
+        "mapping": {
+          "external_system": "digital_ocean",
+          "external_id_template": "{{ record.id }}",
+          "title_template": "DigitalOcean Droplet {{ record.name }}",
+          "asset_type": "infrastructure",
+          "description_template": "DigitalOcean Droplet {{ record.name }} ({{ record.id }}).",
+          "notes_template": "Provider status: {{ record.status|default:'unknown' }}. Region: {{ record.region.slug|default:'not returned' }}. Size: {{ record.size_slug|default:'not returned' }}. VPC: {{ record.vpc_uuid|default:'not returned' }}. Features: {{ record.features|default:'none returned' }}. Tags: {{ record.tags|default:'none returned' }}.",
+          "owner_user_id": ""
+        }
+      }
+    ]
+  }
+}

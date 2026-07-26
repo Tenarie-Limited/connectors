@@ -1,0 +1,171 @@
+{
+  "load_balancers": [
+    {
+      "id": "11111111-aaaa-4111-8111-111111111111",
+      "name": "production-web",
+      "status": "active",
+      "created_at": "2026-07-01T00:00:00Z",
+      "ip": "203.0.113.10",
+      "ipv6": "2001:db8::10",
+      "network": "EXTERNAL",
+      "network_stack": "DUALSTACK",
+      "type": "REGIONAL",
+      "size_unit": 2,
+      "vpc_uuid": "aaaaaaaa-1111-4111-8111-111111111111",
+      "droplet_ids": [
+        100000001,
+        100000002
+      ],
+      "tag": "",
+      "target_load_balancer_ids": [],
+      "redirect_http_to_https": true,
+      "tls_cipher_policy": "STRONG",
+      "enable_backend_keepalive": true,
+      "enable_proxy_protocol": false,
+      "http_idle_timeout_seconds": 60,
+      "forwarding_rules": [
+        {
+          "entry_protocol": "http",
+          "entry_port": 80,
+          "target_protocol": "http",
+          "target_port": 8080,
+          "certificate_id": "",
+          "tls_passthrough": false
+        },
+        {
+          "entry_protocol": "https",
+          "entry_port": 443,
+          "target_protocol": "http",
+          "target_port": 8080,
+          "certificate_id": "aaaaaaaa-bbbb-4ccc-8ddd-eeeeeeeeeeee",
+          "tls_passthrough": false
+        }
+      ],
+      "health_check": {
+        "protocol": "http",
+        "port": 8080,
+        "path": "/health",
+        "check_interval_seconds": 10,
+        "response_timeout_seconds": 5,
+        "healthy_threshold": 3,
+        "unhealthy_threshold": 3
+      },
+      "project_id": "aaaaaaaa-bbbb-4ccc-8ddd-ffffffffffff",
+      "domains": [
+        {
+          "name": "production.example.invalid",
+          "is_managed": true,
+          "certificate_id": "aaaaaaaa-bbbb-4ccc-8ddd-eeeeeeeeeeee"
+        }
+      ],
+      "firewall": {
+        "allow": [
+          "cidr:0.0.0.0/0"
+        ],
+        "deny": []
+      }
+    },
+    {
+      "id": "22222222-bbbb-4222-8222-222222222222",
+      "name": "legacy-web",
+      "status": "active",
+      "created_at": "2026-07-02T00:00:00Z",
+      "ip": "203.0.113.20",
+      "network": "EXTERNAL",
+      "network_stack": "IPV4",
+      "type": "REGIONAL",
+      "size_unit": 1,
+      "vpc_uuid": "bbbbbbbb-2222-4222-8222-222222222222",
+      "droplet_ids": [
+        200000001
+      ],
+      "target_load_balancer_ids": [],
+      "redirect_http_to_https": false,
+      "tls_cipher_policy": "DEFAULT",
+      "enable_backend_keepalive": false,
+      "enable_proxy_protocol": false,
+      "http_idle_timeout_seconds": 60,
+      "forwarding_rules": [
+        {
+          "entry_protocol": "http",
+          "entry_port": 80,
+          "target_protocol": "http",
+          "target_port": 80,
+          "certificate_id": "",
+          "tls_passthrough": false
+        },
+        {
+          "entry_protocol": "https",
+          "entry_port": 443,
+          "target_protocol": "https",
+          "target_port": 443,
+          "certificate_id": "",
+          "tls_passthrough": true
+        }
+      ],
+      "health_check": {
+        "protocol": "http",
+        "port": 80,
+        "path": "/",
+        "check_interval_seconds": 10,
+        "response_timeout_seconds": 5,
+        "healthy_threshold": 3,
+        "unhealthy_threshold": 3
+      },
+      "project_id": "bbbbbbbb-cccc-4ddd-8eee-ffffffffffff",
+      "firewall": {
+        "allow": [],
+        "deny": []
+      }
+    },
+    {
+      "id": "33333333-cccc-4333-8333-333333333333",
+      "name": "orphaned-internal-service",
+      "status": "errored",
+      "created_at": "2026-07-03T00:00:00Z",
+      "network": "INTERNAL",
+      "network_stack": "IPV4",
+      "type": "REGIONAL_NETWORK",
+      "size_unit": 1,
+      "vpc_uuid": "cccccccc-3333-4333-8333-333333333333",
+      "droplet_ids": [],
+      "tag": "",
+      "target_load_balancer_ids": [],
+      "redirect_http_to_https": false,
+      "tls_cipher_policy": "DEFAULT",
+      "enable_backend_keepalive": false,
+      "enable_proxy_protocol": false,
+      "http_idle_timeout_seconds": 60,
+      "forwarding_rules": [
+        {
+          "entry_protocol": "tcp",
+          "entry_port": 5432,
+          "target_protocol": "tcp",
+          "target_port": 5432,
+          "certificate_id": "",
+          "tls_passthrough": false
+        }
+      ],
+      "health_check": {
+        "protocol": "tcp",
+        "port": 5432,
+        "path": "",
+        "check_interval_seconds": 10,
+        "response_timeout_seconds": 5,
+        "healthy_threshold": 3,
+        "unhealthy_threshold": 3
+      },
+      "project_id": "cccccccc-dddd-4eee-8fff-ffffffffffff",
+      "firewall": {
+        "allow": [
+          "cidr:10.0.0.0/8"
+        ],
+        "deny": []
+      }
+    }
+  ],
+  "links": {},
+  "meta": {
+    "total": 3
+  }
+}

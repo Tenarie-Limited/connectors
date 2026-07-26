@@ -1,0 +1,13 @@
+{
+  "login": "example-org",
+  "id": 42001,
+  "node_id": "MDEyOk9yZ2FuaXphdGlvbjQyMDAx",
+  "url": "https://api.github.example.test/orgs/example-org",
+  "repos_url": "https://api.github.example.test/orgs/example-org/repos",
+  "members_url": "https://api.github.example.test/orgs/example-org/members{/member}",
+  "billing_email": "security@example.test",
+  "plan": {
+    "name": "example"
+  },
+  "two_factor_requirement_enabled": true
+}

@@ -1,0 +1,70 @@
+{
+  "name": "Cloudflare Zone Inventory",
+  "description": "Creates or reuses one Tenarie Asset for each Cloudflare zone while excluding account, plan, and permission details from worker output.",
+  "status": "active",
+  "definition_json": {
+    "trigger": {
+      "mode": "manual"
+    },
+    "connector": {
+      "family": "",
+      "config_id": ""
+    },
+    "steps": [
+      {
+        "step_key": "get_1",
+        "step_type": "connector_get",
+        "request": {
+          "path": "/client/v4/zones",
+          "query_params": {
+            "per_page": 50
+          }
+        },
+        "limits": {
+          "timeout_seconds": 30,
+          "max_response_bytes": 1048576
+        },
+        "pagination": {
+          "mode": "page_number",
+          "page_param": "page",
+          "start_page": 1,
+          "max_pages": 1,
+          "continuation": {
+            "enabled": true,
+            "max_partitions": 20
+          }
+        },
+        "response_handling": {
+          "records_path": "result"
+        },
+        "normalization": {
+          "mode": "records_contract_v1",
+          "field_allowlist": [
+            "id",
+            "name",
+            "status",
+            "paused",
+            "type",
+            "modified_on"
+          ]
+        },
+        "auth_reference_id": "__use_default__",
+        "output_alias": "get_1"
+      },
+      {
+        "step_key": "route_1",
+        "step_type": "destination_asset_create",
+        "record_source": "get_1.records",
+        "mapping": {
+          "external_system": "cloudflare",
+          "external_id_template": "{{ record.id }}",
+          "title_template": "Cloudflare Zone {{ record.name }}",
+          "asset_type": "infrastructure",
+          "description_template": "Cloudflare zone {{ record.name }} ({{ record.id }}).",
+          "notes_template": "Provider status: {{ record.status|default:'not returned' }}. Paused: {{ record.paused|default:'not returned' }}. Zone type: {{ record.type|default:'not returned' }}. Last modified: {{ record.modified_on|default:'not returned' }}.",
+          "owner_user_id": ""
+        }
+      }
+    ]
+  }
+}

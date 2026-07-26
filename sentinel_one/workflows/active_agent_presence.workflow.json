@@ -1,0 +1,83 @@
+{
+  "name": "SentinelOne Active Agent Presence",
+  "description": "Adds one Control Test Result that passes when SentinelOne reports at least one installed and active Agent in the configured scope.",
+  "status": "draft",
+  "definition_json": {
+    "trigger": {
+      "mode": "manual"
+    },
+    "connector": {
+      "family": "",
+      "config_id": ""
+    },
+    "steps": [
+      {
+        "step_key": "get_1",
+        "step_type": "connector_get",
+        "request": {
+          "path": "/web/api/v2.1/agents",
+          "query_params": {
+            "countOnly": true,
+            "isActive": true,
+            "isUninstalled": false,
+            "isDecommissioned": false
+          }
+        },
+        "limits": {
+          "timeout_seconds": 30,
+          "max_response_bytes": 262144
+        },
+        "response_handling": {
+          "records_path": "$"
+        },
+        "normalization": {
+          "mode": "records_contract_v1",
+          "field_mappings": [
+            {
+              "output_field": "total_items",
+              "source_path": "pagination.totalItems"
+            }
+          ],
+          "field_coercions": [
+            {
+              "field": "total_items",
+              "coerce_to": "integer"
+            }
+          ],
+          "field_allowlist": [
+            "total_items"
+          ]
+        },
+        "auth_reference_id": "__use_default__",
+        "output_alias": "get_1"
+      },
+      {
+        "step_key": "filter_1",
+        "step_type": "filter_rule",
+        "input_source": "get_1.records",
+        "output_alias": "filter_1",
+        "match_policy": "all",
+        "rules": [
+          {
+            "field": "total_items",
+            "operator": "less_than",
+            "value": 1
+          }
+        ]
+      },
+      {
+        "step_key": "route_1",
+        "step_type": "destination_control_test_result_add",
+        "record_source": "filter_1.records",
+        "mapping": {
+          "control_test_alias": "sentinel_one_active_agent_presence",
+          "control_test_id": "00000000-0000-0000-0000-000000000000",
+          "control_test_code": "CONFIGURE_AFTER_IMPORT",
+          "evaluation_mode": "fail_when_records_present",
+          "data_source_label": "SentinelOne active Agent presence",
+          "notes": "A complete count response passes when SentinelOne reports at least one Agent matching isActive=true, isUninstalled=false, and isDecommissioned=false in the configured scope. Zero matching Agents fails. This is a presence check and does not prove complete endpoint coverage."
+        }
+      }
+    ]
+  }
+}

@@ -1,0 +1,102 @@
+{
+  "name": "DigitalOcean Load Balancers Without Targets Check",
+  "description": "Creates tasks for DigitalOcean Load Balancers with no Droplet, tag, or Regional Load Balancer targets.",
+  "status": "active",
+  "definition_json": {
+    "trigger": {
+      "mode": "manual"
+    },
+    "connector": {
+      "family": "",
+      "config_id": ""
+    },
+    "steps": [
+      {
+        "step_key": "get_1",
+        "step_type": "connector_get",
+        "request": {
+          "path": "/v2/load_balancers",
+          "query_params": {
+            "per_page": 100
+          }
+        },
+        "limits": {
+          "timeout_seconds": 30,
+          "max_response_bytes": 1048576
+        },
+        "pagination": {
+          "mode": "page_number",
+          "page_param": "page",
+          "start_page": 1,
+          "max_pages": 5
+        },
+        "response_handling": {
+          "records_path": "load_balancers"
+        },
+        "normalization": {
+          "mode": "records_contract_v1",
+          "field_allowlist": [
+            "id",
+            "name",
+            "status",
+            "type",
+            "droplet_ids",
+            "tag",
+            "target_load_balancer_ids"
+          ]
+        },
+        "auth_reference_id": "__use_default__",
+        "output_alias": "get_1"
+      },
+      {
+        "step_key": "filter_1",
+        "step_type": "filter_rule",
+        "input_source": "get_1.records",
+        "output_alias": "filter_1",
+        "match_policy": "all",
+        "rules": [
+          {
+            "field": "droplet_ids",
+            "operator": "not_exists"
+          }
+        ]
+      },
+      {
+        "step_key": "filter_2",
+        "step_type": "filter_rule",
+        "input_source": "filter_1.records",
+        "output_alias": "filter_2",
+        "match_policy": "all",
+        "rules": [
+          {
+            "field": "tag",
+            "operator": "not_exists"
+          }
+        ]
+      },
+      {
+        "step_key": "filter_3",
+        "step_type": "filter_rule",
+        "input_source": "filter_2.records",
+        "output_alias": "filter_3",
+        "match_policy": "all",
+        "rules": [
+          {
+            "field": "target_load_balancer_ids",
+            "operator": "not_exists"
+          }
+        ]
+      },
+      {
+        "step_key": "route_1",
+        "step_type": "destination_task_create",
+        "record_source": "filter_3.records",
+        "mapping": {
+          "task_title_template": "Assign targets to DigitalOcean Load Balancer {{ record.name }}",
+          "additional_information_template": "DigitalOcean Load Balancer {{ record.name }} ({{ record.id }}) has no Droplet IDs, Droplet tag, or Regional Load Balancer targets. Assign the intended backend resources or formally retire the obsolete Load Balancer. Provider status: {{ record.status|default:'not returned' }}. Type: {{ record.type|default:'not returned' }}.",
+          "owner_user_id": ""
+        }
+      }
+    ]
+  }
+}

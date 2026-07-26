@@ -1,0 +1,37 @@
+{
+  "schema_version": "connector_bundle.v1",
+  "package_type": "connector_bundle",
+  "connector": {
+    "name": "SentinelOne Connector",
+    "description": "Preview SentinelOne connector for read-only Agent infrastructure inventory and active installed-Agent presence testing.",
+    "family": "custom_api",
+    "status": "draft",
+    "base_url": "https://example.sentinelone.net",
+    "config_json": {
+      "provider_key": "sentinel_one",
+      "headers": {
+        "Accept": "application/json"
+      }
+    },
+    "default_auth_key": "sentinel_one_default_token"
+  },
+  "auth_references": [
+    {
+      "key": "sentinel_one_default_token",
+      "name": "SentinelOne API Token",
+      "status": "active",
+      "auth_mode": "static_header",
+      "secret_backend": "environment",
+      "secret_bindings_json": {
+        "secret": "SENTINELONE_API_TOKEN"
+      },
+      "public_config_json": {
+        "header_name": "Authorization"
+      }
+    }
+  ],
+  "workflow_files": [
+    "workflows/active_agent_presence.workflow.json",
+    "workflows/agent_inventory.workflow.json"
+  ]
+}

@@ -1,0 +1,50 @@
+{
+  "success": true,
+  "errors": [],
+  "messages": [],
+  "result": [
+    {
+      "id": "023e105f4ecef8ad9ca31a8372d0c353",
+      "name": "example.com",
+      "status": "active",
+      "paused": false,
+      "type": "full",
+      "modified_on": "2026-07-20T02:15:00Z",
+      "account": {
+        "id": "01a7362d577a6c3019a474fd6f485823",
+        "name": "Example Organization"
+      },
+      "plan": {
+        "id": "free",
+        "name": "Free Website"
+      },
+      "permissions": [
+        "#zone:read",
+        "#dns_records:read"
+      ]
+    },
+    {
+      "id": "9a7806061c88ada191ed06f989cc3dac",
+      "name": "example.net",
+      "status": "pending",
+      "paused": true,
+      "type": "full",
+      "modified_on": "2026-07-21T04:45:00Z",
+      "account": {
+        "id": "01a7362d577a6c3019a474fd6f485823",
+        "name": "Example Organization"
+      },
+      "plan": {
+        "id": "pro",
+        "name": "Pro Website"
+      }
+    }
+  ],
+  "result_info": {
+    "page": 1,
+    "per_page": 50,
+    "count": 2,
+    "total_count": 2,
+    "total_pages": 1
+  }
+}

@@ -1,0 +1,558 @@
+{
+  "auth_references": [
+    {
+      "auth_mode": "static_bearer",
+      "key": "cloudflare_default_token",
+      "name": "Cloudflare API Token",
+      "public_config_json": {},
+      "secret_backend": "environment",
+      "secret_bindings_json": {
+        "token": "CLOUDFLARE_API_TOKEN"
+      },
+      "status": "active"
+    }
+  ],
+  "connector": {
+    "base_url": "https://api.cloudflare.com",
+    "config_json": {
+      "provider_key": "cloudflare"
+    },
+    "default_auth_key": "cloudflare_default_token",
+    "description": "Read-only Cloudflare connector for zone inventory, encryption-mode review, and selected DNS security reviews.",
+    "family": "custom_api",
+    "name": "Cloudflare Connector",
+    "status": "active"
+  },
+  "package_type": "connector_bundle",
+  "schema_version": "connector_bundle.v1",
+  "workflows": [
+    {
+      "definition_json": {
+        "connector": {
+          "config_id": "",
+          "family": ""
+        },
+        "steps": [
+          {
+            "auth_reference_id": "__use_default__",
+            "limits": {
+              "max_response_bytes": 1048576,
+              "timeout_seconds": 30
+            },
+            "normalization": {
+              "field_allowlist": [
+                "id",
+                "name"
+              ],
+              "mode": "records_contract_v1"
+            },
+            "output_alias": "get_1",
+            "pagination": {
+              "continuation": {
+                "enabled": true,
+                "max_partitions": 20
+              },
+              "max_pages": 1,
+              "mode": "page_number",
+              "page_param": "page",
+              "start_page": 1
+            },
+            "request": {
+              "path": "/client/v4/zones",
+              "query_params": {
+                "per_page": 50
+              }
+            },
+            "response_handling": {
+              "records_path": "result"
+            },
+            "step_key": "get_1",
+            "step_type": "connector_get"
+          },
+          {
+            "auth_reference_id": "__use_default__",
+            "iteration": {
+              "mode": "for_each_record",
+              "preserved_parent_fields": [
+                "id",
+                "name"
+              ],
+              "records_source": "get_1.records"
+            },
+            "limits": {
+              "max_response_bytes": 1048576,
+              "timeout_seconds": 30
+            },
+            "normalization": {
+              "field_allowlist": [
+                "status",
+                "modified_on"
+              ],
+              "mode": "records_contract_v1"
+            },
+            "output_alias": "get_2",
+            "request": {
+              "path": "/client/v4/zones/{{ record.id }}/dnssec",
+              "query_params": {}
+            },
+            "response_handling": {
+              "records_path": "result"
+            },
+            "step_key": "get_2",
+            "step_type": "connector_get"
+          },
+          {
+            "input_source": "get_2.records",
+            "match_policy": "all",
+            "output_alias": "filter_1",
+            "rules": [
+              {
+                "field": "status",
+                "operator": "not_equals",
+                "value": "active"
+              }
+            ],
+            "step_key": "filter_1",
+            "step_type": "filter_rule"
+          },
+          {
+            "mapping": {
+              "additional_information_template": "Cloudflare reports DNSSEC status {{ record.status|default:'not returned' }} for zone {{ record.parent_context.name }} ({{ record.parent_context.id }}). Review the zone and registrar configuration before enabling or repairing DNSSEC. Last modified: {{ record.modified_on|default:'not returned' }}.",
+              "owner_user_id": "",
+              "task_title_template": "Review DNSSEC for Cloudflare zone {{ record.parent_context.name }}"
+            },
+            "record_source": "filter_1.records",
+            "step_key": "route_1",
+            "step_type": "destination_task_create"
+          }
+        ],
+        "trigger": {
+          "mode": "manual"
+        }
+      },
+      "description": "Creates tasks for Cloudflare zones whose DNSSEC status is not active while excluding DS records and key material from worker output.",
+      "name": "Cloudflare DNSSEC Status Review",
+      "status": "active"
+    },
+    {
+      "definition_json": {
+        "connector": {
+          "config_id": "",
+          "family": ""
+        },
+        "steps": [
+          {
+            "auth_reference_id": "__use_default__",
+            "limits": {
+              "max_response_bytes": 1048576,
+              "timeout_seconds": 30
+            },
+            "normalization": {
+              "field_allowlist": [
+                "id",
+                "name"
+              ],
+              "mode": "records_contract_v1"
+            },
+            "output_alias": "get_1",
+            "pagination": {
+              "continuation": {
+                "enabled": true,
+                "max_partitions": 20
+              },
+              "max_pages": 1,
+              "mode": "page_number",
+              "page_param": "page",
+              "start_page": 1
+            },
+            "request": {
+              "path": "/client/v4/zones",
+              "query_params": {
+                "per_page": 50
+              }
+            },
+            "response_handling": {
+              "records_path": "result"
+            },
+            "step_key": "get_1",
+            "step_type": "connector_get"
+          },
+          {
+            "auth_reference_id": "__use_default__",
+            "iteration": {
+              "mode": "for_each_record",
+              "preserved_parent_fields": [
+                "id",
+                "name"
+              ],
+              "records_source": "get_1.records"
+            },
+            "limits": {
+              "max_response_bytes": 1048576,
+              "timeout_seconds": 30
+            },
+            "normalization": {
+              "field_allowlist": [
+                "id",
+                "value",
+                "modified_on"
+              ],
+              "mode": "records_contract_v1"
+            },
+            "output_alias": "get_2",
+            "request": {
+              "path": "/client/v4/zones/{{ record.id }}/settings/ssl",
+              "query_params": {}
+            },
+            "response_handling": {
+              "records_path": "result"
+            },
+            "step_key": "get_2",
+            "step_type": "connector_get"
+          },
+          {
+            "input_source": "get_2.records",
+            "match_policy": "all",
+            "output_alias": "filter_1",
+            "rules": [
+              {
+                "field": "value",
+                "operator": "not_equals",
+                "value": "strict"
+              },
+              {
+                "field": "value",
+                "operator": "not_equals",
+                "value": "origin_pull"
+              }
+            ],
+            "step_key": "filter_1",
+            "step_type": "filter_rule"
+          },
+          {
+            "mapping": {
+              "additional_information_template": "Cloudflare zone {{ record.parent_context.name }} ({{ record.parent_context.id }}) reports origin encryption mode {{ record.value|default:'not returned' }}. Full (strict) uses API value strict and validates the origin certificate. The Enterprise Strict (SSL-Only Origin Pull) mode uses API value origin_pull and is also accepted by this review. Confirm the origin supports a valid certificate before changing the setting. Last modified: {{ record.modified_on|default:'not returned' }}.",
+              "owner_user_id": "",
+              "task_title_template": "Review Cloudflare encryption mode for {{ record.parent_context.name }}"
+            },
+            "record_source": "filter_1.records",
+            "step_key": "route_1",
+            "step_type": "destination_task_create"
+          }
+        ],
+        "trigger": {
+          "mode": "manual"
+        }
+      },
+      "description": "Creates tasks for Cloudflare zones whose current origin encryption mode is neither Full (strict) nor the stronger Strict (SSL-Only Origin Pull) mode.",
+      "name": "Cloudflare Encryption Mode Review",
+      "status": "active"
+    },
+    {
+      "definition_json": {
+        "connector": {
+          "config_id": "",
+          "family": ""
+        },
+        "steps": [
+          {
+            "auth_reference_id": "__use_default__",
+            "limits": {
+              "max_response_bytes": 1048576,
+              "timeout_seconds": 30
+            },
+            "normalization": {
+              "field_allowlist": [
+                "id",
+                "name"
+              ],
+              "mode": "records_contract_v1"
+            },
+            "output_alias": "get_1",
+            "pagination": {
+              "continuation": {
+                "enabled": true,
+                "max_partitions": 20
+              },
+              "max_pages": 1,
+              "mode": "page_number",
+              "page_param": "page",
+              "start_page": 1
+            },
+            "request": {
+              "path": "/client/v4/zones",
+              "query_params": {
+                "per_page": 50
+              }
+            },
+            "response_handling": {
+              "records_path": "result"
+            },
+            "step_key": "get_1",
+            "step_type": "connector_get"
+          },
+          {
+            "auth_reference_id": "__use_default__",
+            "iteration": {
+              "mode": "for_each_record",
+              "preserved_parent_fields": [
+                "id",
+                "name"
+              ],
+              "records_source": "get_1.records"
+            },
+            "limits": {
+              "max_response_bytes": 1048576,
+              "timeout_seconds": 30
+            },
+            "normalization": {
+              "field_allowlist": [
+                "id",
+                "name",
+                "type",
+                "ttl",
+                "proxied",
+                "proxiable",
+                "modified_on"
+              ],
+              "mode": "records_contract_v1"
+            },
+            "output_alias": "get_2",
+            "pagination": {
+              "max_pages": 5,
+              "mode": "page_number",
+              "page_param": "page",
+              "start_page": 1
+            },
+            "request": {
+              "path": "/client/v4/zones/{{ record.id }}/dns_records",
+              "query_params": {
+                "per_page": 100,
+                "proxied": "false"
+              }
+            },
+            "response_handling": {
+              "records_path": "result"
+            },
+            "step_key": "get_2",
+            "step_type": "connector_get"
+          },
+          {
+            "input_source": "get_2.records",
+            "match_policy": "all",
+            "output_alias": "filter_1",
+            "rules": [
+              {
+                "field": "proxiable",
+                "operator": "equals",
+                "value": true
+              },
+              {
+                "field": "proxied",
+                "operator": "equals",
+                "value": false
+              }
+            ],
+            "step_key": "filter_1",
+            "step_type": "filter_rule"
+          },
+          {
+            "input_source": "filter_1.records",
+            "match_policy": "any",
+            "output_alias": "filter_2",
+            "rules": [
+              {
+                "field": "type",
+                "operator": "equals",
+                "value": "A"
+              },
+              {
+                "field": "type",
+                "operator": "equals",
+                "value": "AAAA"
+              },
+              {
+                "field": "type",
+                "operator": "equals",
+                "value": "CNAME"
+              }
+            ],
+            "step_key": "filter_2",
+            "step_type": "filter_rule"
+          },
+          {
+            "mapping": {
+              "additional_information_template": "Cloudflare DNS record {{ record.name }} ({{ record.id }}) in zone {{ record.parent_context.name }} is a proxiable {{ record.type }} record with proxying disabled. Confirm whether direct DNS exposure is explicitly required before changing it. TTL: {{ record.ttl|default:'not returned' }}. Last modified: {{ record.modified_on|default:'not returned' }}. The Connector does not store the record content or origin address.",
+              "owner_user_id": "",
+              "task_title_template": "Review unproxied Cloudflare DNS record {{ record.name }}"
+            },
+            "record_source": "filter_2.records",
+            "step_key": "route_1",
+            "step_type": "destination_task_create"
+          }
+        ],
+        "trigger": {
+          "mode": "manual"
+        }
+      },
+      "description": "Creates advisory tasks for proxiable A, AAAA, or CNAME records that are not proxied, without returning record content or origin addresses to Tenarie.",
+      "name": "Cloudflare Unproxied Public DNS Records Review",
+      "status": "active"
+    },
+    {
+      "definition_json": {
+        "connector": {
+          "config_id": "",
+          "family": ""
+        },
+        "steps": [
+          {
+            "auth_reference_id": "__use_default__",
+            "limits": {
+              "max_response_bytes": 1048576,
+              "timeout_seconds": 30
+            },
+            "normalization": {
+              "field_allowlist": [
+                "id",
+                "name",
+                "status",
+                "paused",
+                "type",
+                "modified_on"
+              ],
+              "mode": "records_contract_v1"
+            },
+            "output_alias": "get_1",
+            "pagination": {
+              "continuation": {
+                "enabled": true,
+                "max_partitions": 20
+              },
+              "max_pages": 1,
+              "mode": "page_number",
+              "page_param": "page",
+              "start_page": 1
+            },
+            "request": {
+              "path": "/client/v4/zones",
+              "query_params": {
+                "per_page": 50
+              }
+            },
+            "response_handling": {
+              "records_path": "result"
+            },
+            "step_key": "get_1",
+            "step_type": "connector_get"
+          },
+          {
+            "mapping": {
+              "asset_type": "infrastructure",
+              "description_template": "Cloudflare zone {{ record.name }} ({{ record.id }}).",
+              "external_id_template": "{{ record.id }}",
+              "external_system": "cloudflare",
+              "notes_template": "Provider status: {{ record.status|default:'not returned' }}. Paused: {{ record.paused|default:'not returned' }}. Zone type: {{ record.type|default:'not returned' }}. Last modified: {{ record.modified_on|default:'not returned' }}.",
+              "owner_user_id": "",
+              "title_template": "Cloudflare Zone {{ record.name }}"
+            },
+            "record_source": "get_1.records",
+            "step_key": "route_1",
+            "step_type": "destination_asset_create"
+          }
+        ],
+        "trigger": {
+          "mode": "manual"
+        }
+      },
+      "description": "Creates or reuses one Tenarie Asset for each Cloudflare zone while excluding account, plan, and permission details from worker output.",
+      "name": "Cloudflare Zone Inventory",
+      "status": "active"
+    },
+    {
+      "definition_json": {
+        "connector": {
+          "config_id": "",
+          "family": ""
+        },
+        "steps": [
+          {
+            "auth_reference_id": "__use_default__",
+            "limits": {
+              "max_response_bytes": 1048576,
+              "timeout_seconds": 30
+            },
+            "normalization": {
+              "field_allowlist": [
+                "id",
+                "name",
+                "status",
+                "paused",
+                "type",
+                "modified_on"
+              ],
+              "mode": "records_contract_v1"
+            },
+            "output_alias": "get_1",
+            "pagination": {
+              "continuation": {
+                "enabled": true,
+                "max_partitions": 20
+              },
+              "max_pages": 1,
+              "mode": "page_number",
+              "page_param": "page",
+              "start_page": 1
+            },
+            "request": {
+              "path": "/client/v4/zones",
+              "query_params": {
+                "per_page": 50
+              }
+            },
+            "response_handling": {
+              "records_path": "result"
+            },
+            "step_key": "get_1",
+            "step_type": "connector_get"
+          },
+          {
+            "input_source": "get_1.records",
+            "match_policy": "any",
+            "output_alias": "filter_1",
+            "rules": [
+              {
+                "field": "paused",
+                "operator": "equals",
+                "value": true
+              },
+              {
+                "field": "status",
+                "operator": "not_equals",
+                "value": "active"
+              }
+            ],
+            "step_key": "filter_1",
+            "step_type": "filter_rule"
+          },
+          {
+            "mapping": {
+              "additional_information_template": "Cloudflare zone {{ record.name }} ({{ record.id }}) requires review. Provider status: {{ record.status|default:'not returned' }}. Paused: {{ record.paused|default:'not returned' }}. Zone type: {{ record.type|default:'not returned' }}. Confirm that the current zone state is intended and restore normal service where appropriate.",
+              "owner_user_id": "",
+              "task_title_template": "Review Cloudflare zone status for {{ record.name }}"
+            },
+            "record_source": "filter_1.records",
+            "step_key": "route_1",
+            "step_type": "destination_task_create"
+          }
+        ],
+        "trigger": {
+          "mode": "manual"
+        }
+      },
+      "description": "Creates tasks for Cloudflare zones that are paused or are not reported as active.",
+      "name": "Cloudflare Zone Status Review",
+      "status": "active"
+    }
+  ]
+}

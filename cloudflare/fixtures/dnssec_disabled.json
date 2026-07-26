@@ -1,0 +1,12 @@
+{
+  "success": true,
+  "errors": [],
+  "messages": [],
+  "result": {
+    "status": "disabled",
+    "modified_on": "2026-07-21T05:00:00Z",
+    "ds": "",
+    "digest": "",
+    "public_key": ""
+  }
+}

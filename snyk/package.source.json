@@ -1,0 +1,38 @@
+{
+  "schema_version": "connector_bundle.v1",
+  "package_type": "connector_bundle",
+  "connector": {
+    "name": "Snyk Connector",
+    "description": "Read-only Snyk connector for Target and Project inventory plus synchronous open-Issue ingestion.",
+    "family": "custom_api",
+    "status": "active",
+    "base_url": "https://api.snyk.io/rest",
+    "config_json": {
+      "provider_key": "snyk",
+      "headers": {
+        "Accept": "application/vnd.api+json"
+      }
+    },
+    "default_auth_key": "snyk_default_token"
+  },
+  "auth_references": [
+    {
+      "key": "snyk_default_token",
+      "name": "Snyk API Token",
+      "status": "active",
+      "auth_mode": "static_header",
+      "secret_backend": "environment",
+      "secret_bindings_json": {
+        "secret": "SNYK_API_TOKEN"
+      },
+      "public_config_json": {
+        "header_name": "Authorization"
+      }
+    }
+  ],
+  "workflow_files": [
+    "workflows/open_issues.workflow.json",
+    "workflows/project_inventory.workflow.json",
+    "workflows/target_inventory.workflow.json"
+  ]
+}

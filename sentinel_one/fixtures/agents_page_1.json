@@ -1,0 +1,68 @@
+{
+  "pagination": {
+    "nextCursor": null,
+    "totalItems": 2
+  },
+  "errors": [],
+  "data": [
+    {
+      "id": "225494730938493801",
+      "computerName": "EXAMPLE-WIN-001",
+      "agentVersion": "24.1.2.100",
+      "osName": "Windows 11 Enterprise",
+      "osArch": "64 bit",
+      "siteName": "Example Production",
+      "groupName": "Workstations",
+      "registeredAt": "2026-06-01T08:00:00Z",
+      "lastActiveDate": "2026-07-26T01:15:00Z",
+      "isActive": true,
+      "isUpToDate": true,
+      "networkStatus": "connected",
+      "isPendingUninstall": false,
+      "isUninstalled": false,
+      "isDecommissioned": false,
+      "activeProtection": [
+        "edr"
+      ],
+      "licenseKey": "excluded-license-material",
+      "externalIp": "192.0.2.10",
+      "lastLoggedInUserName": "excluded-user",
+      "networkInterfaces": [
+        {
+          "name": "excluded-interface",
+          "physical": "00:00:5E:00:53:01"
+        }
+      ],
+      "activeDirectory": {
+        "userPrincipalName": "excluded@example.invalid"
+      },
+      "proxyStates": {
+        "mgmtProxyAddress": "https://proxy.example.invalid"
+      }
+    },
+    {
+      "id": "225494730938493802",
+      "computerName": "EXAMPLE-LINUX-002",
+      "agentVersion": "24.1.2.100",
+      "osName": "Example Linux",
+      "osArch": "64 bit",
+      "siteName": "Example Production",
+      "groupName": "Servers",
+      "registeredAt": "2026-06-02T09:00:00Z",
+      "lastActiveDate": "2026-07-25T23:45:00Z",
+      "isActive": false,
+      "isUpToDate": true,
+      "networkStatus": "disconnected",
+      "isPendingUninstall": false,
+      "isUninstalled": false,
+      "isDecommissioned": false,
+      "activeProtection": [
+        "edr"
+      ],
+      "licenseKey": "excluded-license-material",
+      "serialNumber": "excluded-serial",
+      "machineSid": "excluded-machine-identity",
+      "lastIpToMgmt": "192.0.2.20"
+    }
+  ]
+}

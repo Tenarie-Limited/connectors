@@ -1,0 +1,79 @@
+{
+  "name": "DigitalOcean Load Balancer Inventory",
+  "description": "Creates or reuses one Tenarie Asset for each DigitalOcean Load Balancer while excluding certificate, domain, project, and firewall-address details.",
+  "status": "active",
+  "definition_json": {
+    "trigger": {
+      "mode": "manual"
+    },
+    "connector": {
+      "family": "",
+      "config_id": ""
+    },
+    "steps": [
+      {
+        "step_key": "get_1",
+        "step_type": "connector_get",
+        "request": {
+          "path": "/v2/load_balancers",
+          "query_params": {
+            "per_page": 100
+          }
+        },
+        "limits": {
+          "timeout_seconds": 30,
+          "max_response_bytes": 1048576
+        },
+        "pagination": {
+          "mode": "page_number",
+          "page_param": "page",
+          "start_page": 1,
+          "max_pages": 5
+        },
+        "response_handling": {
+          "records_path": "load_balancers"
+        },
+        "normalization": {
+          "mode": "records_contract_v1",
+          "field_allowlist": [
+            "id",
+            "name",
+            "status",
+            "created_at",
+            "ip",
+            "ipv6",
+            "network",
+            "network_stack",
+            "type",
+            "size_unit",
+            "vpc_uuid",
+            "droplet_ids",
+            "tag",
+            "target_load_balancer_ids",
+            "redirect_http_to_https",
+            "tls_cipher_policy",
+            "enable_backend_keepalive",
+            "enable_proxy_protocol",
+            "http_idle_timeout_seconds"
+          ]
+        },
+        "auth_reference_id": "__use_default__",
+        "output_alias": "get_1"
+      },
+      {
+        "step_key": "route_1",
+        "step_type": "destination_asset_create",
+        "record_source": "get_1.records",
+        "mapping": {
+          "external_system": "digital_ocean",
+          "external_id_template": "{{ record.id }}",
+          "title_template": "DigitalOcean Load Balancer {{ record.name }}",
+          "asset_type": "infrastructure",
+          "description_template": "DigitalOcean {{ record.type|default:'Load Balancer' }} {{ record.name }} ({{ record.id }}).",
+          "notes_template": "Provider status: {{ record.status|default:'not returned' }}. Network: {{ record.network|default:'not returned' }} / {{ record.network_stack|default:'not returned' }}. IPv4: {{ record.ip|default:'not returned' }}. IPv6: {{ record.ipv6|default:'not returned' }}. VPC: {{ record.vpc_uuid|default:'not returned' }}. Size units: {{ record.size_unit|default:'not returned' }}. Droplet targets: {{ record.droplet_ids|default:'none returned' }}. Tag target: {{ record.tag|default:'none returned' }}. Load Balancer targets: {{ record.target_load_balancer_ids|default:'none returned' }}. HTTP redirect: {{ record.redirect_http_to_https }}. TLS cipher policy: {{ record.tls_cipher_policy|default:'not returned' }}. Created: {{ record.created_at|default:'not returned' }}.",
+          "owner_user_id": ""
+        }
+      }
+    ]
+  }
+}

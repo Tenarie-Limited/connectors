@@ -1,0 +1,75 @@
+{
+  "name": "Snyk Target Inventory",
+  "description": "Creates and synchronizes one Tenarie Asset for each Snyk Target while excluding repository URLs and integration details from worker output.",
+  "status": "draft",
+  "definition_json": {
+    "trigger": {
+      "mode": "manual"
+    },
+    "connector": {
+      "family": "",
+      "config_id": ""
+    },
+    "steps": [
+      {
+        "step_key": "get_1",
+        "step_type": "connector_get",
+        "request": {
+          "path": "/orgs/REPLACE_WITH_SNYK_ORGANIZATION_ID/targets",
+          "query_params": {
+            "version": "2024-10-15",
+            "limit": 100,
+            "exclude_empty": false
+          }
+        },
+        "limits": {
+          "timeout_seconds": 30,
+          "max_response_bytes": 1048576
+        },
+        "pagination": {
+          "mode": "next_link",
+          "next_link_path": "links.next",
+          "max_pages": 5
+        },
+        "response_handling": {
+          "records_path": "data"
+        },
+        "normalization": {
+          "mode": "records_contract_v1",
+          "field_mappings": [
+            {
+              "output_field": "display_name",
+              "source_path": "attributes.display_name"
+            },
+            {
+              "output_field": "is_private",
+              "source_path": "attributes.is_private"
+            }
+          ],
+          "field_allowlist": [
+            "id",
+            "display_name",
+            "is_private"
+          ]
+        },
+        "auth_reference_id": "__use_default__",
+        "output_alias": "get_1"
+      },
+      {
+        "step_key": "route_1",
+        "step_type": "destination_asset_create",
+        "record_source": "get_1.records",
+        "mapping": {
+          "external_system": "snyk",
+          "external_id_template": "{{ record.id }}",
+          "title_template": "Snyk Target {{ record.display_name }}",
+          "asset_type": "application",
+          "description_template": "Snyk Target {{ record.display_name }}. Private source: {{ record.is_private|default:'not returned' }}.",
+          "notes_template": "",
+          "owner_user_id": "",
+          "synchronization_mode": "provider_managed"
+        }
+      }
+    ]
+  }
+}

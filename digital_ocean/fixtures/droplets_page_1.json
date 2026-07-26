@@ -1,0 +1,86 @@
+{
+  "droplets": [
+    {
+      "id": 100000001,
+      "name": "sanitized-web-01",
+      "memory": 2048,
+      "vcpus": 1,
+      "disk": 50,
+      "locked": false,
+      "status": "active",
+      "kernel": null,
+      "created_at": "2026-07-01T00:00:00Z",
+      "features": [
+        "monitoring"
+      ],
+      "backup_ids": [],
+      "snapshot_ids": [],
+      "volume_ids": [],
+      "size_slug": "s-1vcpu-2gb",
+      "networks": {
+        "v4": [
+          {
+            "ip_address": "203.0.113.10",
+            "netmask": "255.255.255.0",
+            "gateway": "203.0.113.1",
+            "type": "public"
+          },
+          {
+            "ip_address": "10.10.0.10",
+            "netmask": "255.255.0.0",
+            "gateway": "10.10.0.1",
+            "type": "private"
+          }
+        ],
+        "v6": []
+      },
+      "region": {
+        "name": "Sanitized Region",
+        "slug": "nyc3",
+        "available": true
+      },
+      "tags": [
+        "sanitized-production"
+      ],
+      "vpc_uuid": "aaaaaaaa-1111-4222-8333-bbbbbbbbbbbb"
+    },
+    {
+      "id": 100000002,
+      "name": "sanitized-worker-01",
+      "memory": 4096,
+      "vcpus": 2,
+      "disk": 80,
+      "locked": false,
+      "status": "off",
+      "kernel": null,
+      "created_at": "2026-07-02T00:00:00Z",
+      "features": [],
+      "backup_ids": [],
+      "snapshot_ids": [],
+      "volume_ids": [],
+      "size_slug": "s-2vcpu-4gb",
+      "networks": {
+        "v4": [
+          {
+            "ip_address": "198.51.100.20",
+            "netmask": "255.255.255.0",
+            "gateway": "198.51.100.1",
+            "type": "public"
+          }
+        ],
+        "v6": []
+      },
+      "region": {
+        "name": "Sanitized Region",
+        "slug": "sfo3",
+        "available": true
+      },
+      "tags": [],
+      "vpc_uuid": "cccccccc-4444-4555-8666-dddddddddddd"
+    }
+  ],
+  "links": {},
+  "meta": {
+    "total": 2
+  }
+}

@@ -1,0 +1,38 @@
+{
+  "schema_version": "connector_bundle.v1",
+  "package_type": "connector_bundle",
+  "connector": {
+    "name": "GitHub Connector",
+    "description": "Read-only GitHub connector for repository inventory, repository visibility policy review, organization-wide two-factor authentication enforcement review, and organization-member MFA review.",
+    "family": "custom_api",
+    "status": "active",
+    "base_url": "https://api.github.com",
+    "config_json": {
+      "provider_key": "github",
+      "headers": {
+        "Accept": "application/vnd.github+json",
+        "X-GitHub-Api-Version": "2026-03-10"
+      }
+    },
+    "default_auth_key": "github_default_token"
+  },
+  "auth_references": [
+    {
+      "key": "github_default_token",
+      "name": "GitHub API Token",
+      "status": "active",
+      "auth_mode": "static_bearer",
+      "secret_backend": "environment",
+      "secret_bindings_json": {
+        "token": "GITHUB_API_TOKEN"
+      },
+      "public_config_json": {}
+    }
+  ],
+  "workflow_files": [
+    "workflows/expected_private_repository_exposure_review.workflow.json",
+    "workflows/organization_members_without_mfa_review.workflow.json",
+    "workflows/organization_two_factor_enforcement_review.workflow.json",
+    "workflows/repository_inventory.workflow.json"
+  ]
+}

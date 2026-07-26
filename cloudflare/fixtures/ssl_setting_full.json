@@ -1,0 +1,12 @@
+{
+  "success": true,
+  "errors": [],
+  "messages": [],
+  "result": {
+    "id": "ssl",
+    "value": "full",
+    "editable": true,
+    "modified_on": "2026-07-22T02:00:00Z",
+    "internal_context": "not approved for worker output"
+  }
+}

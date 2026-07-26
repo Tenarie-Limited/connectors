@@ -1,0 +1,78 @@
+{
+  "name": "DigitalOcean Database Inventory",
+  "description": "Creates or reuses one Tenarie Asset for each online DigitalOcean managed database cluster while excluding connection material from worker output.",
+  "status": "active",
+  "definition_json": {
+    "trigger": {
+      "mode": "manual"
+    },
+    "connector": {
+      "family": "",
+      "config_id": ""
+    },
+    "steps": [
+      {
+        "step_key": "get_1",
+        "step_type": "connector_get",
+        "request": {
+          "path": "/v2/databases",
+          "query_params": {}
+        },
+        "limits": {
+          "timeout_seconds": 30,
+          "max_response_bytes": 1048576
+        },
+        "response_handling": {
+          "records_path": "databases"
+        },
+        "normalization": {
+          "mode": "records_contract_v1",
+          "field_allowlist": [
+            "id",
+            "name",
+            "engine",
+            "version",
+            "semantic_version",
+            "num_nodes",
+            "region",
+            "status",
+            "size",
+            "private_network_uuid",
+            "storage_size_mib",
+            "created_at"
+          ]
+        },
+        "auth_reference_id": "__use_default__",
+        "output_alias": "get_1"
+      },
+      {
+        "step_key": "filter_1",
+        "step_type": "filter_rule",
+        "input_source": "get_1.records",
+        "output_alias": "filter_1",
+        "match_policy": "all",
+        "rules": [
+          {
+            "field": "status",
+            "operator": "equals",
+            "value": "online"
+          }
+        ]
+      },
+      {
+        "step_key": "route_1",
+        "step_type": "destination_asset_create",
+        "record_source": "filter_1.records",
+        "mapping": {
+          "external_system": "digital_ocean",
+          "external_id_template": "{{ record.id }}",
+          "title_template": "DigitalOcean Database {{ record.name }}",
+          "asset_type": "infrastructure",
+          "description_template": "DigitalOcean managed {{ record.engine|default:'database' }} cluster {{ record.name }} ({{ record.id }}).",
+          "notes_template": "Provider status: {{ record.status|default:'unknown' }}. Engine version: {{ record.semantic_version|default:record.version|default:'not returned' }}. Region: {{ record.region|default:'not returned' }}. Size: {{ record.size|default:'not returned' }}. Nodes: {{ record.num_nodes|default:'not returned' }}. Storage MiB: {{ record.storage_size_mib|default:'not returned' }}. Private network: {{ record.private_network_uuid|default:'not returned' }}. Created: {{ record.created_at|default:'not returned' }}.",
+          "owner_user_id": ""
+        }
+      }
+    ]
+  }
+}

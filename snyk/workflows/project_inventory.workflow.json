@@ -1,0 +1,100 @@
+{
+  "name": "Snyk Project Inventory",
+  "description": "Creates and synchronizes one Tenarie Asset for each Snyk Project, including bounded latest issue-count and test-freshness metadata.",
+  "status": "draft",
+  "definition_json": {
+    "trigger": {
+      "mode": "manual"
+    },
+    "connector": {
+      "family": "",
+      "config_id": ""
+    },
+    "steps": [
+      {
+        "step_key": "get_1",
+        "step_type": "connector_get",
+        "request": {
+          "path": "/orgs/REPLACE_WITH_SNYK_ORGANIZATION_ID/projects",
+          "query_params": {
+            "version": "2024-10-15",
+            "limit": 100,
+            "meta.latest_issue_counts": true
+          }
+        },
+        "limits": {
+          "timeout_seconds": 30,
+          "max_response_bytes": 1048576
+        },
+        "pagination": {
+          "mode": "next_link",
+          "next_link_path": "links.next",
+          "max_pages": 5
+        },
+        "response_handling": {
+          "records_path": "data"
+        },
+        "normalization": {
+          "mode": "records_contract_v1",
+          "field_mappings": [
+            {
+              "output_field": "project_name",
+              "source_path": "attributes.name"
+            },
+            {
+              "output_field": "origin",
+              "source_path": "attributes.origin"
+            },
+            {
+              "output_field": "project_type",
+              "source_path": "attributes.type"
+            },
+            {
+              "output_field": "provider_status",
+              "source_path": "attributes.status"
+            },
+            {
+              "output_field": "created_at",
+              "source_path": "attributes.created"
+            },
+            {
+              "output_field": "read_only",
+              "source_path": "attributes.read_only"
+            },
+            {
+              "output_field": "latest_issue_counts",
+              "source_path": "meta.latest_issue_counts"
+            }
+          ],
+          "field_allowlist": [
+            "id",
+            "project_name",
+            "origin",
+            "project_type",
+            "provider_status",
+            "created_at",
+            "read_only",
+            "latest_issue_counts"
+          ]
+        },
+        "auth_reference_id": "__use_default__",
+        "output_alias": "get_1"
+      },
+      {
+        "step_key": "route_1",
+        "step_type": "destination_asset_create",
+        "record_source": "get_1.records",
+        "mapping": {
+          "external_system": "snyk",
+          "external_id_template": "{{ record.id }}",
+          "title_template": "Snyk Project {{ record.project_name }}",
+          "asset_type": "application",
+          "description_template": "Snyk {{ record.project_type|default:'project' }} project {{ record.project_name }}. Origin: {{ record.origin|default:'not returned' }}. Provider status: {{ record.provider_status|default:'not returned' }}. Read only: {{ record.read_only|default:'not returned' }}. Created: {{ record.created_at|default:'not returned' }}. Latest issue snapshot: {{ record.latest_issue_counts.updated_at|default:'not returned' }}. Critical: {{ record.latest_issue_counts.critical|default:'not returned' }}, high: {{ record.latest_issue_counts.high|default:'not returned' }}, medium: {{ record.latest_issue_counts.medium|default:'not returned' }}, low: {{ record.latest_issue_counts.low|default:'not returned' }}.",
+          "notes_template": "",
+          "owner_user_id": "",
+          "synchronization_mode": "provider_managed"
+        }
+      }
+    ]
+  }
+}

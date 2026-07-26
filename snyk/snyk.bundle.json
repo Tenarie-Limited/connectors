@@ -1,0 +1,325 @@
+{
+  "auth_references": [
+    {
+      "auth_mode": "static_header",
+      "key": "snyk_default_token",
+      "name": "Snyk API Token",
+      "public_config_json": {
+        "header_name": "Authorization"
+      },
+      "secret_backend": "environment",
+      "secret_bindings_json": {
+        "secret": "SNYK_API_TOKEN"
+      },
+      "status": "active"
+    }
+  ],
+  "connector": {
+    "base_url": "https://api.snyk.io/rest",
+    "config_json": {
+      "headers": {
+        "Accept": "application/vnd.api+json"
+      },
+      "provider_key": "snyk"
+    },
+    "default_auth_key": "snyk_default_token",
+    "description": "Read-only Snyk connector for Target and Project inventory plus synchronous open-Issue ingestion.",
+    "family": "custom_api",
+    "name": "Snyk Connector",
+    "status": "active"
+  },
+  "package_type": "connector_bundle",
+  "schema_version": "connector_bundle.v1",
+  "workflows": [
+    {
+      "definition_json": {
+        "connector": {
+          "config_id": "",
+          "family": ""
+        },
+        "steps": [
+          {
+            "auth_reference_id": "__use_default__",
+            "limits": {
+              "max_response_bytes": 1048576,
+              "timeout_seconds": 30
+            },
+            "normalization": {
+              "field_allowlist": [
+                "id",
+                "title",
+                "description",
+                "severity",
+                "provider_status",
+                "issue_type",
+                "scan_item_id"
+              ],
+              "field_mappings": [
+                {
+                  "output_field": "title",
+                  "source_path": "attributes.title"
+                },
+                {
+                  "output_field": "description",
+                  "source_path": "attributes.description"
+                },
+                {
+                  "output_field": "severity",
+                  "source_path": "attributes.effective_severity_level"
+                },
+                {
+                  "output_field": "provider_status",
+                  "source_path": "attributes.status"
+                },
+                {
+                  "output_field": "issue_type",
+                  "source_path": "attributes.type"
+                },
+                {
+                  "output_field": "scan_item_id",
+                  "source_path": "relationships.scan_item.data.id"
+                }
+              ],
+              "mode": "records_contract_v1"
+            },
+            "output_alias": "get_1",
+            "pagination": {
+              "max_pages": 5,
+              "mode": "next_link",
+              "next_link_path": "links.next"
+            },
+            "request": {
+              "path": "/orgs/REPLACE_WITH_SNYK_ORGANIZATION_ID/issues",
+              "query_params": {
+                "ignored": false,
+                "limit": 100,
+                "status": "open",
+                "version": "2024-10-15"
+              }
+            },
+            "response_handling": {
+              "records_path": "data"
+            },
+            "step_key": "get_1",
+            "step_type": "connector_get"
+          },
+          {
+            "input_source": "get_1.records",
+            "match_policy": "all",
+            "output_alias": "filter_1",
+            "rules": [
+              {
+                "field": "issue_type",
+                "operator": "not_equals",
+                "value": "license"
+              }
+            ],
+            "step_key": "filter_1",
+            "step_type": "filter_rule"
+          },
+          {
+            "mapping": {
+              "asset_alias_template": "{{ record.scan_item_id }}",
+              "business_impact_template": "",
+              "cve_id_template": "",
+              "cwe_id_template": "",
+              "description_template": "Snyk severity: {{ record.severity|default:'not returned' }}. Provider status: {{ record.provider_status|default:'not returned' }}.\n\n{{ record.description }}",
+              "external_id_template": "{{ record.id }}",
+              "external_system": "snyk",
+              "name_template": "Snyk {{ record.issue_type|default:'security issue' }}: {{ record.title }}",
+              "owner_user_id": "",
+              "remediation_action_template": "Review the current issue and approved remediation guidance in Snyk, then apply and validate the appropriate fix.",
+              "source": "scanner",
+              "status": "open",
+              "synchronization_mode": "provider_managed"
+            },
+            "record_source": "filter_1.records",
+            "step_key": "route_1",
+            "step_type": "destination_vulnerability_create"
+          }
+        ],
+        "trigger": {
+          "mode": "manual"
+        }
+      },
+      "description": "Creates and synchronizes Tenarie Vulnerabilities for open, non-ignored Snyk security Issues while excluding license Issues.",
+      "name": "Snyk Open Issues",
+      "status": "draft"
+    },
+    {
+      "definition_json": {
+        "connector": {
+          "config_id": "",
+          "family": ""
+        },
+        "steps": [
+          {
+            "auth_reference_id": "__use_default__",
+            "limits": {
+              "max_response_bytes": 1048576,
+              "timeout_seconds": 30
+            },
+            "normalization": {
+              "field_allowlist": [
+                "id",
+                "project_name",
+                "origin",
+                "project_type",
+                "provider_status",
+                "created_at",
+                "read_only",
+                "latest_issue_counts"
+              ],
+              "field_mappings": [
+                {
+                  "output_field": "project_name",
+                  "source_path": "attributes.name"
+                },
+                {
+                  "output_field": "origin",
+                  "source_path": "attributes.origin"
+                },
+                {
+                  "output_field": "project_type",
+                  "source_path": "attributes.type"
+                },
+                {
+                  "output_field": "provider_status",
+                  "source_path": "attributes.status"
+                },
+                {
+                  "output_field": "created_at",
+                  "source_path": "attributes.created"
+                },
+                {
+                  "output_field": "read_only",
+                  "source_path": "attributes.read_only"
+                },
+                {
+                  "output_field": "latest_issue_counts",
+                  "source_path": "meta.latest_issue_counts"
+                }
+              ],
+              "mode": "records_contract_v1"
+            },
+            "output_alias": "get_1",
+            "pagination": {
+              "max_pages": 5,
+              "mode": "next_link",
+              "next_link_path": "links.next"
+            },
+            "request": {
+              "path": "/orgs/REPLACE_WITH_SNYK_ORGANIZATION_ID/projects",
+              "query_params": {
+                "limit": 100,
+                "meta.latest_issue_counts": true,
+                "version": "2024-10-15"
+              }
+            },
+            "response_handling": {
+              "records_path": "data"
+            },
+            "step_key": "get_1",
+            "step_type": "connector_get"
+          },
+          {
+            "mapping": {
+              "asset_type": "application",
+              "description_template": "Snyk {{ record.project_type|default:'project' }} project {{ record.project_name }}. Origin: {{ record.origin|default:'not returned' }}. Provider status: {{ record.provider_status|default:'not returned' }}. Read only: {{ record.read_only|default:'not returned' }}. Created: {{ record.created_at|default:'not returned' }}. Latest issue snapshot: {{ record.latest_issue_counts.updated_at|default:'not returned' }}. Critical: {{ record.latest_issue_counts.critical|default:'not returned' }}, high: {{ record.latest_issue_counts.high|default:'not returned' }}, medium: {{ record.latest_issue_counts.medium|default:'not returned' }}, low: {{ record.latest_issue_counts.low|default:'not returned' }}.",
+              "external_id_template": "{{ record.id }}",
+              "external_system": "snyk",
+              "notes_template": "",
+              "owner_user_id": "",
+              "synchronization_mode": "provider_managed",
+              "title_template": "Snyk Project {{ record.project_name }}"
+            },
+            "record_source": "get_1.records",
+            "step_key": "route_1",
+            "step_type": "destination_asset_create"
+          }
+        ],
+        "trigger": {
+          "mode": "manual"
+        }
+      },
+      "description": "Creates and synchronizes one Tenarie Asset for each Snyk Project, including bounded latest issue-count and test-freshness metadata.",
+      "name": "Snyk Project Inventory",
+      "status": "draft"
+    },
+    {
+      "definition_json": {
+        "connector": {
+          "config_id": "",
+          "family": ""
+        },
+        "steps": [
+          {
+            "auth_reference_id": "__use_default__",
+            "limits": {
+              "max_response_bytes": 1048576,
+              "timeout_seconds": 30
+            },
+            "normalization": {
+              "field_allowlist": [
+                "id",
+                "display_name",
+                "is_private"
+              ],
+              "field_mappings": [
+                {
+                  "output_field": "display_name",
+                  "source_path": "attributes.display_name"
+                },
+                {
+                  "output_field": "is_private",
+                  "source_path": "attributes.is_private"
+                }
+              ],
+              "mode": "records_contract_v1"
+            },
+            "output_alias": "get_1",
+            "pagination": {
+              "max_pages": 5,
+              "mode": "next_link",
+              "next_link_path": "links.next"
+            },
+            "request": {
+              "path": "/orgs/REPLACE_WITH_SNYK_ORGANIZATION_ID/targets",
+              "query_params": {
+                "exclude_empty": false,
+                "limit": 100,
+                "version": "2024-10-15"
+              }
+            },
+            "response_handling": {
+              "records_path": "data"
+            },
+            "step_key": "get_1",
+            "step_type": "connector_get"
+          },
+          {
+            "mapping": {
+              "asset_type": "application",
+              "description_template": "Snyk Target {{ record.display_name }}. Private source: {{ record.is_private|default:'not returned' }}.",
+              "external_id_template": "{{ record.id }}",
+              "external_system": "snyk",
+              "notes_template": "",
+              "owner_user_id": "",
+              "synchronization_mode": "provider_managed",
+              "title_template": "Snyk Target {{ record.display_name }}"
+            },
+            "record_source": "get_1.records",
+            "step_key": "route_1",
+            "step_type": "destination_asset_create"
+          }
+        ],
+        "trigger": {
+          "mode": "manual"
+        }
+      },
+      "description": "Creates and synchronizes one Tenarie Asset for each Snyk Target while excluding repository URLs and integration details from worker output.",
+      "name": "Snyk Target Inventory",
+      "status": "draft"
+    }
+  ]
+}

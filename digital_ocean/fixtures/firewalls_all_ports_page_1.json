@@ -1,0 +1,29 @@
+{
+  "firewalls": [
+    {
+      "id": "99999999-8888-4777-8666-555555555555",
+      "name": "sanitized-all-ports-firewall",
+      "status": "succeeded",
+      "droplet_ids": [
+        100000001
+      ],
+      "pending_changes": [],
+      "inbound_rules": [
+        {
+          "protocol": "tcp",
+          "ports": "all",
+          "sources": {
+            "addresses": [
+              "0.0.0.0/0",
+              "::/0"
+            ]
+          }
+        }
+      ]
+    }
+  ],
+  "links": {},
+  "meta": {
+    "total": 1
+  }
+}

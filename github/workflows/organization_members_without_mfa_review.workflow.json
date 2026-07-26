@@ -1,0 +1,77 @@
+{
+  "name": "GitHub Organization Members Without MFA Review",
+  "description": "Adds a Control Test Result and creates tasks for GitHub organization members returned by GitHub's two-factor-authentication-disabled filter.",
+  "status": "draft",
+  "definition_json": {
+    "trigger": {
+      "mode": "manual"
+    },
+    "connector": {
+      "family": "",
+      "config_id": ""
+    },
+    "steps": [
+      {
+        "step_key": "get_1",
+        "step_type": "connector_get",
+        "request": {
+          "path": "/orgs/REPLACE_WITH_GITHUB_ORGANIZATION/members",
+          "query_params": {
+            "filter": "2fa_disabled",
+            "role": "all",
+            "per_page": 100
+          }
+        },
+        "limits": {
+          "timeout_seconds": 30,
+          "max_response_bytes": 1048576
+        },
+        "pagination": {
+          "mode": "page_number",
+          "page_param": "page",
+          "start_page": 1,
+          "max_pages": 1,
+          "continuation": {
+            "enabled": true,
+            "max_partitions": 20
+          }
+        },
+        "response_handling": {
+          "records_path": "$"
+        },
+        "normalization": {
+          "mode": "records_contract_v1",
+          "field_allowlist": [
+            "id",
+            "login"
+          ]
+        },
+        "auth_reference_id": "__use_default__",
+        "output_alias": "get_1"
+      },
+      {
+        "step_key": "route_1",
+        "step_type": "destination_control_test_result_add",
+        "record_source": "get_1.records",
+        "mapping": {
+          "control_test_alias": "github_member_mfa",
+          "control_test_id": "00000000-0000-0000-0000-000000000000",
+          "control_test_code": "CONFIGURE_AFTER_IMPORT",
+          "evaluation_mode": "fail_when_records_present",
+          "data_source_label": "GitHub member MFA review",
+          "notes": "Complete GitHub collection passes when the organization-owner-only 2fa_disabled member filter returns no direct organization members. Returned members fail the result. Incomplete collection is inconclusive and provider failure is recorded as error."
+        }
+      },
+      {
+        "step_key": "route_2",
+        "step_type": "destination_task_create",
+        "record_source": "get_1.records",
+        "mapping": {
+          "task_title_template": "Enable MFA for GitHub user {{ record.login }}",
+          "additional_information_template": "GitHub returned organization member {{ record.login }} (user ID {{ record.id }}) from the organization-owner-only 2fa_disabled member filter. Confirm the account still requires organization access, then require the user to enable an approved MFA method in GitHub.",
+          "owner_user_id": ""
+        }
+      }
+    ]
+  }
+}
