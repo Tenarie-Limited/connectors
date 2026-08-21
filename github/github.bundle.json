@@ -99,7 +99,7 @@
               {
                 "field": "topics",
                 "operator": "contains",
-                "value": "tenarie-private"
+                "value": "expected-private"
               },
               {
                 "field": "visibility",
@@ -112,7 +112,7 @@
           },
           {
             "mapping": {
-              "additional_information_template": "GitHub repository {{ record.full_name }} is marked with the public policy topic tenarie-private but currently reports visibility {{ record.visibility|default:'not returned' }}. Confirm whether the visibility changed accidentally and restrict access in GitHub when required. Repository ID: {{ record.id }}. Owner: {{ record.owner_login|default:'not returned' }}. Archived: {{ record.archived|default:'not returned' }}. Disabled: {{ record.disabled|default:'not returned' }}. Last updated: {{ record.updated_at|default:'not returned' }}.",
+              "additional_information_template": "GitHub repository {{ record.full_name }} is marked with the public policy topic expected-private but currently reports visibility {{ record.visibility|default:'not returned' }}. Confirm whether the visibility changed accidentally and restrict access in GitHub when required. Repository ID: {{ record.id }}. Owner: {{ record.owner_login|default:'not returned' }}. Archived: {{ record.archived|default:'not returned' }}. Disabled: {{ record.disabled|default:'not returned' }}. Last updated: {{ record.updated_at|default:'not returned' }}.",
               "owner_user_id": "",
               "task_title_template": "Review GitHub repository visibility for {{ record.full_name }}"
             },
@@ -125,7 +125,7 @@
           "mode": "manual"
         }
       },
-      "description": "Creates tasks when a repository marked with the tenarie-private topic is not currently private.",
+      "description": "Creates tasks when a repository marked with the expected-private topic is not currently private.",
       "name": "GitHub Expected Private Repository Exposure Review",
       "status": "active"
     },
