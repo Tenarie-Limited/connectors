@@ -78,7 +78,7 @@
           "title_template": "GitHub Repository {{ record.full_name }}",
           "asset_type": "application",
           "description_template": "GitHub repository {{ record.full_name }} with current visibility {{ record.visibility|default:'not returned' }}.",
-          "notes_template": "Owner: {{ record.owner_login|default:'not returned' }}. Default branch: {{ record.default_branch|default:'not returned' }}. Private: {{ record.private|default:'not returned' }}. Archived: {{ record.archived|default:'not returned' }}. Disabled: {{ record.disabled|default:'not returned' }}. Fork: {{ record.fork|default:'not returned' }}. Topics: {{ record.topics|default:'none returned' }}. Last push: {{ record.pushed_at|default:'not returned' }}. Last updated: {{ record.updated_at|default:'not returned' }}.",
+          "notes_template": "Owner: {{ record.owner_login|default:'not returned' }}. Default branch: {{ record.default_branch|default:'not returned' }}. Private: {% if record.private == None or record.private == '' %}not returned{% else %}{{ record.private }}{% endif %}. Archived: {% if record.archived == None or record.archived == '' %}not returned{% else %}{{ record.archived }}{% endif %}. Disabled: {% if record.disabled == None or record.disabled == '' %}not returned{% else %}{{ record.disabled }}{% endif %}. Fork: {% if record.fork == None or record.fork == '' %}not returned{% else %}{{ record.fork }}{% endif %}. Topics: {{ record.topics|default:'none returned' }}. Last push: {{ record.pushed_at|default:'not returned' }}. Last updated: {{ record.updated_at|default:'not returned' }}.",
           "owner_user_id": ""
         }
       }

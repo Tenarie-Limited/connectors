@@ -1,0 +1,134 @@
+{
+  "name": "SentinelOne Eligible Agent Currency Result",
+  "description": "Reviews whether the selected SentinelOne agents are reported as out of date.",
+  "status": "draft",
+  "definition_json": {
+    "trigger": {
+      "mode": "manual"
+    },
+    "connector": {
+      "family": "",
+      "config_id": ""
+    },
+    "steps": [
+      {
+        "step_key": "get_1",
+        "step_type": "connector_get",
+        "request": {
+          "path": "/web/api/v2.1/agents",
+          "query_params": {}
+        },
+        "limits": {
+          "timeout_seconds": 30,
+          "max_response_bytes": 1048576
+        },
+        "pagination": {
+          "mode": "offset_limit",
+          "offset_param": "skip",
+          "limit_param": "limit",
+          "start_offset": 0,
+          "omit_initial_offset": true,
+          "page_size": 100,
+          "max_pages": 5
+        },
+        "response_handling": {
+          "records_path": "data"
+        },
+        "normalization": {
+          "mode": "records_contract_v1",
+          "field_mappings": [
+            {
+              "output_field": "is_up_to_date",
+              "source_path": "isUpToDate"
+            },
+            {
+              "output_field": "is_uninstalled",
+              "source_path": "isUninstalled"
+            },
+            {
+              "output_field": "is_decommissioned",
+              "source_path": "isDecommissioned"
+            },
+            {
+              "output_field": "is_pending_uninstall",
+              "source_path": "isPendingUninstall"
+            },
+            {
+              "output_field": "id",
+              "source_path": "id"
+            }
+          ],
+          "field_coercions": [
+            {
+              "field": "is_up_to_date",
+              "coerce_to": "boolean"
+            },
+            {
+              "field": "is_uninstalled",
+              "coerce_to": "boolean"
+            },
+            {
+              "field": "is_decommissioned",
+              "coerce_to": "boolean"
+            },
+            {
+              "field": "is_pending_uninstall",
+              "coerce_to": "boolean"
+            }
+          ],
+          "field_allowlist": [
+            "is_up_to_date",
+            "is_uninstalled",
+            "is_decommissioned",
+            "is_pending_uninstall",
+            "id"
+          ]
+        },
+        "auth_reference_id": "__use_default__",
+        "output_alias": "get_1"
+      },
+      {
+        "step_key": "filter_1",
+        "step_type": "filter_rule",
+        "input_source": "get_1.records",
+        "output_alias": "filter_1",
+        "match_policy": "all",
+        "rules": [
+          {
+            "field": "is_up_to_date",
+            "operator": "equals",
+            "value": false
+          },
+          {
+            "field": "is_uninstalled",
+            "operator": "equals",
+            "value": false
+          },
+          {
+            "field": "is_decommissioned",
+            "operator": "equals",
+            "value": false
+          },
+          {
+            "field": "is_pending_uninstall",
+            "operator": "equals",
+            "value": false
+          }
+        ]
+      },
+      {
+        "step_key": "result_1",
+        "step_type": "destination_control_test_result_add",
+        "record_source": "filter_1.records",
+        "mapping": {
+          "control_test_alias": "eligible_agent_currency_result",
+          "control_test_id": "00000000-0000-0000-0000-000000000000",
+          "control_test_code": "T-67",
+          "evaluation_mode": "fail_when_records_present",
+          "data_source_label": "SentinelOne Eligible Agent Currency Result",
+          "notes": "Confirm which agents are included and what counts as an acceptable version before enabling this workflow. Keep it in draft until the agent list and identities are reliable and the provider's version status matches that policy. An empty agent list does not establish that required agents are current."
+        }
+      }
+    ]
+  }
+}

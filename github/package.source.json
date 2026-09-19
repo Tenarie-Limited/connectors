@@ -32,7 +32,11 @@
   "workflow_files": [
     "workflows/expected_private_repository_exposure_review.workflow.json",
     "workflows/organization_members_without_mfa_review.workflow.json",
+    "workflows/organization_mfa_enforcement_result.workflow.json",
     "workflows/organization_two_factor_enforcement_review.workflow.json",
+    "workflows/repository_confidentiality_result.workflow.json",
     "workflows/repository_inventory.workflow.json"
-  ]
+  ],
+  "package_key": "github",
+  "release": "2026.09.4"
 }

@@ -44,6 +44,22 @@
           "field_allowlist": [
             "id",
             "login"
+          ],
+          "field_mappings": [
+            {
+              "output_field": "id",
+              "source_path": "id"
+            },
+            {
+              "output_field": "login",
+              "source_path": "login"
+            }
+          ],
+          "field_coercions": [
+            {
+              "field": "id",
+              "coerce_to": "integer"
+            }
           ]
         },
         "auth_reference_id": "__use_default__",
@@ -56,10 +72,10 @@
         "mapping": {
           "control_test_alias": "github_member_mfa",
           "control_test_id": "00000000-0000-0000-0000-000000000000",
-          "control_test_code": "CONFIGURE_AFTER_IMPORT",
+          "control_test_code": "T-60",
           "evaluation_mode": "fail_when_records_present",
           "data_source_label": "GitHub member MFA review",
-          "notes": "Complete GitHub collection passes when the organization-owner-only 2fa_disabled member filter returns no direct organization members. Returned members fail the result. Incomplete collection is inconclusive and provider failure is recorded as error."
+          "notes": "Reviews multi-factor authentication enrollment for direct members of the selected GitHub organization. Confirm organization-owner access and the intended membership scope before enabling this workflow. A complete collection passes when no members without multi-factor authentication are found and fails when such members are found. Incomplete collection is inconclusive; collection or data-processing failures are errors. This does not assess policy enforcement, authentication method strength, outside collaborators, or identities outside the selected organization."
         }
       },
       {

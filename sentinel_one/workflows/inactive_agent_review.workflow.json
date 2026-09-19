@@ -1,6 +1,6 @@
 {
-  "name": "SentinelOne Agent Inventory",
-  "description": "Creates and synchronizes one Tenarie infrastructure Asset for each SentinelOne Agent returned within the configured bounded scope.",
+  "name": "SentinelOne Inactive Agent Review",
+  "description": "Creates review Tasks for installed, non-decommissioned agents that reports inactive, excluding pending uninstall. This is a provider flag observation, not an elapsed-time or protection test.",
   "status": "draft",
   "definition_json": {
     "trigger": {
@@ -9,10 +9,6 @@
     "connector": {
       "family": "",
       "config_id": ""
-    },
-    "collection_cycle": {
-      "enabled": true,
-      "max_batches": 3
     },
     "steps": [
       {
@@ -33,11 +29,7 @@
           "start_offset": 0,
           "omit_initial_offset": true,
           "page_size": 100,
-          "max_pages": 5,
-          "continuation": {
-            "enabled": true,
-            "max_partitions": 3
-          }
+          "max_pages": 5
         },
         "response_handling": {
           "records_path": "data"
@@ -104,6 +96,10 @@
             {
               "output_field": "active_protection",
               "source_path": "activeProtection"
+            },
+            {
+              "output_field": "external_id",
+              "source_path": "id"
             }
           ],
           "field_allowlist": [
@@ -122,25 +118,55 @@
             "is_pending_uninstall",
             "is_uninstalled",
             "is_decommissioned",
-            "active_protection"
+            "active_protection",
+            "external_id"
           ]
         },
         "auth_reference_id": "__use_default__",
         "output_alias": "get_1"
       },
       {
+        "step_key": "filter_1",
+        "step_type": "filter_rule",
+        "input_source": "get_1.records",
+        "output_alias": "filter_1",
+        "match_policy": "all",
+        "rules": [
+          {
+            "field": "is_active",
+            "operator": "equals",
+            "value": false
+          },
+          {
+            "field": "is_uninstalled",
+            "operator": "equals",
+            "value": false
+          },
+          {
+            "field": "is_decommissioned",
+            "operator": "equals",
+            "value": false
+          },
+          {
+            "field": "is_pending_uninstall",
+            "operator": "equals",
+            "value": false
+          },
+          {
+            "field": "external_id",
+            "operator": "exists",
+            "value": true
+          }
+        ]
+      },
+      {
         "step_key": "route_1",
-        "step_type": "destination_asset_create",
-        "record_source": "get_1.records",
+        "step_type": "destination_task_create",
+        "record_source": "filter_1.records",
         "mapping": {
-          "external_system": "sentinel_one",
-          "external_id_template": "{{ record.id }}",
-          "title_template": "{{ record.computer_name|default:'SentinelOne Agent' }}",
-          "asset_type": "infrastructure",
-          "description_template": "SentinelOne Agent {{ record.id }}. Computer name: {{ record.computer_name|default:'not returned' }}. Agent version: {{ record.agent_version|default:'not returned' }}. Operating system: {{ record.os_name|default:'not returned' }} {{ record.os_arch|default:'' }}. Site: {{ record.site_name|default:'not returned' }}. Group: {{ record.group_name|default:'not returned' }}. Registered: {{ record.registered_at|default:'not returned' }}. Last active: {{ record.last_active_date|default:'not returned' }}. Active: {% if record.is_active == None or record.is_active == '' %}not returned{% else %}{{ record.is_active }}{% endif %}. Up to date: {% if record.is_up_to_date == None or record.is_up_to_date == '' %}not returned{% else %}{{ record.is_up_to_date }}{% endif %}. Network status: {{ record.network_status|default:'not returned' }}. Pending uninstall: {% if record.is_pending_uninstall == None or record.is_pending_uninstall == '' %}not returned{% else %}{{ record.is_pending_uninstall }}{% endif %}. Uninstalled: {% if record.is_uninstalled == None or record.is_uninstalled == '' %}not returned{% else %}{{ record.is_uninstalled }}{% endif %}. Decommissioned: {% if record.is_decommissioned == None or record.is_decommissioned == '' %}not returned{% else %}{{ record.is_decommissioned }}{% endif %}. Active protection: {% if record.active_protection == None or record.active_protection == '' %}not returned{% else %}{{ record.active_protection }}{% endif %}.",
-          "notes_template": "",
-          "owner_user_id": "",
-          "synchronization_mode": "provider_managed"
+          "task_title_template": "SentinelOne Inactive Agent Review: {{ record.computer_name }}",
+          "additional_information_template": "SentinelOne agent {{ record.id }} ({{ record.computer_name }}) reports inactive. Site: {{ record.site_name }}. Group: {{ record.group_name }}. Version: {{ record.agent_version }}. Last active reported by provider: {{ record.last_active_date }}. Confirm the expected device state and investigate in SentinelOne. This observation establishes neither a time-based SLA breach nor protection effectiveness. Existing Tasks are reused without reopening or updating.",
+          "owner_user_id": ""
         }
       }
     ]

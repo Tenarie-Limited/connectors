@@ -56,7 +56,7 @@
         "record_source": "filter_1.records",
         "mapping": {
           "task_title_template": "Enable two-factor authentication enforcement for GitHub organization {{ record.login|default:'organization' }}",
-          "additional_information_template": "GitHub organization {{ record.login|default:'not returned' }} (organization ID {{ record.id|default:'not returned' }}) did not report two-factor authentication enforcement as enabled. Reported value: {{ record.two_factor_requirement_enabled|default:'not returned' }}. Confirm the request used an organization-owner token with access to full organization details, then enable an approved two-factor authentication requirement in GitHub.",
+          "additional_information_template": "GitHub organization {{ record.login|default:'not returned' }} (organization ID {{ record.id|default:'not returned' }}) did not report two-factor authentication enforcement as enabled. Reported value: {% if record.two_factor_requirement_enabled == None or record.two_factor_requirement_enabled == '' %}not returned{% else %}{{ record.two_factor_requirement_enabled }}{% endif %}. Confirm the request used an organization-owner token with access to full organization details, then enable an approved two-factor authentication requirement in GitHub.",
           "owner_user_id": ""
         }
       }

@@ -26,10 +26,14 @@
     }
   ],
   "workflow_files": [
+    "workflows/dnssec_reported_state_result.workflow.json",
     "workflows/dnssec_status_review.workflow.json",
     "workflows/encryption_mode_review.workflow.json",
+    "workflows/origin_certificate_validation_result.workflow.json",
     "workflows/unproxied_dns_records_review.workflow.json",
     "workflows/zone_inventory.workflow.json",
     "workflows/zone_status_review.workflow.json"
-  ]
+  ],
+  "package_key": "cloudflare",
+  "release": "2026.09.4"
 }

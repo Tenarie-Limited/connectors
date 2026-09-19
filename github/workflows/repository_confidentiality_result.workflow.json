@@ -1,7 +1,7 @@
 {
-  "name": "GitHub Expected Private Repository Exposure Review",
-  "description": "Creates tasks when a repository marked with the expected-private topic is not currently private.",
-  "status": "active",
+  "name": "GitHub Repository Confidentiality Result",
+  "description": "Reviews repository visibility to help identify repositories that may conflict with your organization's confidentiality requirements. Confirm which repositories must remain private before enabling this workflow.",
+  "status": "draft",
   "definition_json": {
     "trigger": {
       "mode": "manual"
@@ -45,21 +45,28 @@
           "mode": "records_contract_v1",
           "field_mappings": [
             {
-              "output_field": "owner_login",
-              "source_path": "owner.login"
+              "output_field": "id",
+              "source_path": "id"
+            },
+            {
+              "output_field": "topics",
+              "source_path": "topics"
+            },
+            {
+              "output_field": "visibility",
+              "source_path": "visibility"
+            }
+          ],
+          "field_coercions": [
+            {
+              "field": "id",
+              "coerce_to": "integer"
             }
           ],
           "field_allowlist": [
             "id",
-            "name",
-            "full_name",
-            "owner_login",
-            "private",
-            "visibility",
-            "archived",
-            "disabled",
             "topics",
-            "updated_at"
+            "visibility"
           ]
         },
         "auth_reference_id": "__use_default__",
@@ -85,13 +92,16 @@
         ]
       },
       {
-        "step_key": "route_1",
-        "step_type": "destination_task_create",
+        "step_key": "result_1",
+        "step_type": "destination_control_test_result_add",
         "record_source": "filter_1.records",
         "mapping": {
-          "task_title_template": "Review GitHub repository visibility for {{ record.full_name }}",
-          "additional_information_template": "GitHub repository {{ record.full_name }} is marked with the public policy topic expected-private but currently reports visibility {{ record.visibility|default:'not returned' }}. Confirm whether the visibility changed accidentally and restrict access in GitHub when required. Repository ID: {{ record.id }}. Owner: {{ record.owner_login|default:'not returned' }}. Archived: {% if record.archived == None or record.archived == '' %}not returned{% else %}{{ record.archived }}{% endif %}. Disabled: {% if record.disabled == None or record.disabled == '' %}not returned{% else %}{{ record.disabled }}{% endif %}. Last updated: {{ record.updated_at|default:'not returned' }}.",
-          "owner_user_id": ""
+          "control_test_alias": "repository_confidentiality_result",
+          "control_test_id": "00000000-0000-0000-0000-000000000000",
+          "control_test_code": "T-62",
+          "evaluation_mode": "fail_when_records_present",
+          "data_source_label": "GitHub Repository Confidentiality Result",
+          "notes": "Keep this workflow in draft until the repositories that must remain private are identified and their visibility can be confirmed. Missing repositories, an empty selection, or unknown visibility do not establish compliance with confidentiality requirements."
         }
       }
     ]

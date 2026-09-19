@@ -1,6 +1,6 @@
 {
   "name": "DigitalOcean Database Inventory",
-  "description": "Creates or reuses one Tenarie Asset for each online DigitalOcean managed database cluster while excluding connection material from worker output.",
+  "description": "Creates or updates an asset for each DigitalOcean managed database cluster, including clusters that are not currently active.",
   "status": "active",
   "definition_json": {
     "trigger": {
@@ -46,30 +46,16 @@
         "output_alias": "get_1"
       },
       {
-        "step_key": "filter_1",
-        "step_type": "filter_rule",
-        "input_source": "get_1.records",
-        "output_alias": "filter_1",
-        "match_policy": "all",
-        "rules": [
-          {
-            "field": "status",
-            "operator": "equals",
-            "value": "online"
-          }
-        ]
-      },
-      {
         "step_key": "route_1",
         "step_type": "destination_asset_create",
-        "record_source": "filter_1.records",
+        "record_source": "get_1.records",
         "mapping": {
           "external_system": "digital_ocean",
           "external_id_template": "{{ record.id }}",
           "title_template": "DigitalOcean Database {{ record.name }}",
           "asset_type": "infrastructure",
           "description_template": "DigitalOcean managed {{ record.engine|default:'database' }} cluster {{ record.name }} ({{ record.id }}).",
-          "notes_template": "Provider status: {{ record.status|default:'unknown' }}. Engine version: {{ record.semantic_version|default:record.version|default:'not returned' }}. Region: {{ record.region|default:'not returned' }}. Size: {{ record.size|default:'not returned' }}. Nodes: {{ record.num_nodes|default:'not returned' }}. Storage MiB: {{ record.storage_size_mib|default:'not returned' }}. Private network: {{ record.private_network_uuid|default:'not returned' }}. Created: {{ record.created_at|default:'not returned' }}.",
+          "notes_template": "Provider status: {{ record.status|default:'unknown' }}. Engine version: {% if record.semantic_version %}{{ record.semantic_version }}{% else %}{{ record.version|default:'not returned' }}{% endif %}. Region: {{ record.region|default:'not returned' }}. Size: {{ record.size|default:'not returned' }}. Nodes: {% if record.num_nodes == None or record.num_nodes == '' %}not returned{% else %}{{ record.num_nodes }}{% endif %}. Storage MiB: {% if record.storage_size_mib == None or record.storage_size_mib == '' %}not returned{% else %}{{ record.storage_size_mib }}{% endif %}. Private network: {{ record.private_network_uuid|default:'not returned' }}. Created: {{ record.created_at|default:'not returned' }}.",
           "owner_user_id": ""
         }
       }

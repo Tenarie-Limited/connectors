@@ -76,7 +76,7 @@
         "record_source": "filter_1.records",
         "mapping": {
           "task_title_template": "Review Cloudflare zone status for {{ record.name }}",
-          "additional_information_template": "Cloudflare zone {{ record.name }} ({{ record.id }}) requires review. Provider status: {{ record.status|default:'not returned' }}. Paused: {{ record.paused|default:'not returned' }}. Zone type: {{ record.type|default:'not returned' }}. Confirm that the current zone state is intended and restore normal service where appropriate.",
+          "additional_information_template": "Cloudflare zone {{ record.name }} ({{ record.id }}) requires review. Provider status: {{ record.status|default:'not returned' }}. Paused: {% if record.paused == None or record.paused == '' %}not returned{% else %}{{ record.paused }}{% endif %}. Zone type: {{ record.type|default:'not returned' }}. Confirm that the current zone state is intended and restore normal service where appropriate.",
           "owner_user_id": ""
         }
       }

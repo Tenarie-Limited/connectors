@@ -1,155 +1,71 @@
 # Cloudflare Connector
 
-Availability: Limited Beta
+The Cloudflare Connector inventories zones and reviews selected zone, DNS, and
+origin-encryption settings. It reads Cloudflare data and creates records in
+Tenarie without changing Cloudflare configuration.
 
-The Cloudflare Connector helps your organization inventory Cloudflare zones
-and review selected zone, origin-encryption, and DNS security settings in
-Tenarie.
+## Included workflows
 
-The current preview is read-only in Cloudflare. Tenarie does not create,
-change, or delete Cloudflare zones, DNS records, or security settings.
+| Workflow | Purpose |
+| --- | --- |
+| Zone Inventory | Creates or reuses an asset for each zone available to the token. |
+| Zone Status Review | Creates tasks for paused zones or zones not reported as active. |
+| DNSSEC Status Review | Creates tasks for zones whose reported DNSSEC status is not active. |
+| Encryption Mode Review | Creates tasks for origin encryption settings that require review. |
+| Unproxied Public DNS Records Review | Creates advisory tasks for eligible DNS records with proxying disabled. |
+| Origin Certificate Validation Result | Reviews reported certificate-validation settings as a draft control test workflow. |
+| DNSSEC Reported State Result | Reviews reported DNSSEC status as a draft control test workflow. |
 
-## Included Workflows
+## Requirements
 
-### Cloudflare Zone Inventory
+- Access to Connectors in Tenarie and permission to manage connectors and create
+  the assets, tasks, and test results required by your selected workflows.
+- A scoped Cloudflare API token with **Zone Read**, **DNS Read**, and
+  **Zone Settings Read** permissions for the intended zones.
+- Active control tests T-63 and T-64 for the result workflows.
 
-This Workflow creates or reuses one Tenarie infrastructure Asset for each
-zone available to the connected Cloudflare API token. Tenarie uses the
-Cloudflare zone ID as the stable provider identity, so later runs reuse the
-same Asset.
+The connector uses a scoped API token; a Global API Key is not required.
 
-New Assets include the zone name, provider status, paused state, zone type,
-and last-modified time when Cloudflare returns those fields. Account, plan,
-and permission details are removed by the Connector worker before records
-reach Tenarie.
+## Setup
 
-### Cloudflare Zone Status Review
+1. Create a Cloudflare API token with the required read permissions and restrict
+   it to the zones you intend to review.
+2. Make it available through your organization's approved connector credential
+   configuration. Do not put credentials in package files.
+3. In Tenarie, open **Connectors**, select **Add Connector**, then
+   **Import Connector** and upload [cloudflare.bundle.json](cloudflare.bundle.json).
+4. Open the imported connector and confirm its authentication configuration.
+5. Use `https://api.cloudflare.com` as the base URL.
+6. Confirm the selected control tests and preview each intended workflow.
 
-This Workflow creates or reuses a Tenarie Task when a zone is paused or
-Cloudflare does not report its status as `active`. Review each result to
-confirm whether the state is expected before changing the zone.
+## Configuration and interpretation
 
-### Cloudflare DNSSEC Status Review
+The encryption review accepts **Full (strict)** (`strict`) and **Strict
+(SSL-Only Origin Pull)** (`origin_pull`). Full mode (`full`) encrypts the
+connection but does not validate the origin certificate. Other, missing, or
+unknown values require review. Confirm that the origin supports HTTPS with an
+appropriate certificate before changing settings in Cloudflare.
 
-This Workflow checks the DNSSEC status for each available zone and creates or
-reuses a Tenarie Task when the status is not `active`. DNSSEC setup can depend
-on registrar and parent-zone configuration, so review the reported state
-before enabling or repairing DNSSEC.
+An unproxied DNS record may be intentional. Review each task against the service's
+requirements rather than treating it as proof of a vulnerability.
 
-The Connector keeps only the zone identity, DNSSEC status, and last-modified
-time. DS records, digests, public keys, and other DNSSEC response fields are
-removed by the Connector worker before records reach Tenarie.
+Keep the result workflows in draft until the intended zones are confirmed and
+missing zones or unknown settings can be handled reliably. Reported DNSSEC status
+does not independently verify the DNS chain of trust; reported encryption settings
+do not independently test the origin certificate or connection.
 
-### Cloudflare Encryption Mode Review
+## Preview and troubleshooting
 
-This Workflow checks the current origin encryption mode for each available
-zone. It creates or reuses a Tenarie Task unless Cloudflare reports either:
+Preview does not create destination records. Confirm the zone list, reported
+settings, and expected review tasks before running workflows or scheduling them.
 
-- `strict`, shown in Cloudflare as **Full (strict)**
-- `origin_pull`, shown on eligible Enterprise zones as **Strict (SSL-Only
-  Origin Pull)**
+- Missing zones: check the token's zone selection and Zone Read permission.
+- DNS requests fail: check DNS Read permission for the affected zone.
+- Encryption requests fail: check Zone Settings Read permission.
+- Missing control tests: ask your administrator to make T-63 and T-64 active.
+- Incomplete collection: reduce the selected scope and verify a complete run
+  before treating the results as comprehensive.
 
-Full mode uses the API value `full`. It encrypts traffic to the origin but
-does not validate the origin certificate, so this Workflow treats it as
-requiring review. Off, Flexible, missing, and unknown values also require
-review.
-
-Before changing a setting, confirm that the origin accepts HTTPS and presents
-a current certificate for the requested hostname. The Workflow is read-only
-and does not change the Cloudflare encryption mode.
-
-### Cloudflare Unproxied Public DNS Records Review
-
-This advisory Workflow creates or reuses a Tenarie Task for proxiable `A`,
-`AAAA`, or `CNAME` records where Cloudflare proxying is disabled. An unproxied
-record can be intentional, so each result requires review rather than proving
-a vulnerability by itself.
-
-The Connector keeps the record ID, name, type, TTL, proxy state, and
-last-modified time. DNS record content, origin addresses, comments, tags, and
-metadata are removed by the Connector worker before records reach Tenarie.
-
-## Before you start
-
-You need:
-
-- A Tenarie Team, Business, or Enterprise account with Connectors available.
-- `connectors:write`, `assets:write`, and `tasks:write` permission to import,
-  preview, and run all included Workflows.
-- A deployed and connected Tenarie Connector worker.
-- A scoped Cloudflare API token with Zone Read, DNS Read, and Zone Settings Read
-  permissions for the zones you want Tenarie to review.
-- An administrator who can make the token available securely to the Connector
-  worker.
-
-Use a scoped API token. The current package does not require a Cloudflare
-Global API Key or provider create, edit, or delete permissions.
-
-## Connect Cloudflare
-
-1. In Cloudflare, create an API token with Zone Read, DNS Read, and Zone Settings
-   Read permissions.
-2. Limit the token to the accounts or zones that Tenarie should review.
-3. Store the token in the approved secret store used by your Tenarie
-   Connector worker. Do not paste it into a Connector package or Workflow
-   field.
-4. In Tenarie, open **Connectors**.
-5. Select **Add Connector**, then **Import Connector**.
-6. Upload the Cloudflare Connector package supplied by Tenarie.
-7. Wait for the import to finish and open **Cloudflare Connector**.
-8. Confirm that the Connector worker is online and the Cloudflare
-   authentication reference is available.
-
-## Preview and run the Workflows
-
-Use Preview before the first live run. Preview reads and evaluates source
-data but does not create Assets or Tasks.
-
-When the preview results look correct:
-
-1. Open the required Cloudflare Workflow.
-2. Review its source request, filters, destination, and estimated writes.
-3. Select **Run Workflow**.
-4. Review the execution history and the resulting Assets or Tasks.
-
-An authorized user can run a Workflow manually or create an interval schedule
-from the Workflow's **Schedule** tab. Scheduled runs use the selected Run As
-user's current permissions, which Tenarie checks again before every run.
-
-## Limits
-
-- The package reads up to 50 zones in each execution partition and supports up
-  to 20 bounded partitions.
-- DNS record review reads at most five pages of 100 records for each zone in a
-  partition. The run fails rather than reporting a complete result when that
-  limit is reached before an empty terminal page.
-- Per-step output, cumulative source-record, destination-write, request,
-  response-size, execution-time, and 24-hour continuation-expiry limits still
-  apply.
-- A Workflow execution can perform at most 500 cumulative destination writes.
-- Cloudflare API rate limits and the zones available to the API token also
-  apply.
-- Web Application Firewall review is not included in this package version.
-  It requires separate validation of Cloudflare plan availability,
-  permissions, ruleset semantics, and absent-resource behavior.
-
-Preview and execution records contain approved normalized fields only.
-Tenarie stores bounded summaries, hashes, counters, and destination outcomes;
-it does not intentionally persist raw Cloudflare request or response bodies.
-
-## Troubleshooting
-
-- If authentication fails, confirm that the API token is active and available
-  to the Connector worker.
-- If a zone is missing, confirm that the token is allowed to read it.
-- If DNSSEC or DNS record requests fail, confirm that the token has DNS Read
-  permission for the affected zone.
-- If encryption-mode requests fail, confirm that the token has Zone Settings Read
-  permission for the affected zone.
-- If a run reports an incomplete collection, reduce the zones available to
-  the token or split the review across separately scoped Connectors.
-- If a scheduled run pauses, confirm that the Run As user still has access to
-  the Connector and every required Tenarie action scope.
-
-Rotate or revoke the Cloudflare API token immediately if it may have been
-exposed.
+DNS record review reads at most five pages of 100 records per zone. Provider rate
+limits and workflow limits also apply. Web Application Firewall review is not
+included. Workflow definitions are available in [workflows](workflows/).

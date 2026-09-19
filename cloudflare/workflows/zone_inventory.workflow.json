@@ -1,6 +1,6 @@
 {
   "name": "Cloudflare Zone Inventory",
-  "description": "Creates or reuses one Tenarie Asset for each Cloudflare zone while excluding account, plan, and permission details from worker output.",
+  "description": "Creates or updates an asset for each Cloudflare zone, including its reported status.",
   "status": "active",
   "definition_json": {
     "trigger": {
@@ -61,7 +61,7 @@
           "title_template": "Cloudflare Zone {{ record.name }}",
           "asset_type": "infrastructure",
           "description_template": "Cloudflare zone {{ record.name }} ({{ record.id }}).",
-          "notes_template": "Provider status: {{ record.status|default:'not returned' }}. Paused: {{ record.paused|default:'not returned' }}. Zone type: {{ record.type|default:'not returned' }}. Last modified: {{ record.modified_on|default:'not returned' }}.",
+          "notes_template": "Provider status: {{ record.status|default:'not returned' }}. Paused: {% if record.paused == None or record.paused == '' %}not returned{% else %}{{ record.paused }}{% endif %}. Zone type: {{ record.type|default:'not returned' }}. Last modified: {{ record.modified_on|default:'not returned' }}.",
           "owner_user_id": ""
         }
       }

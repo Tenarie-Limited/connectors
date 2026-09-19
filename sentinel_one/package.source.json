@@ -32,6 +32,12 @@
   ],
   "workflow_files": [
     "workflows/active_agent_presence.workflow.json",
-    "workflows/agent_inventory.workflow.json"
-  ]
+    "workflows/agent_inventory.workflow.json",
+    "workflows/eligible_agent_active_result.workflow.json",
+    "workflows/eligible_agent_currency_result.workflow.json",
+    "workflows/inactive_agent_review.workflow.json",
+    "workflows/outdated_agent_review.workflow.json"
+  ],
+  "package_key": "sentinel_one",
+  "release": "2026.09.4"
 }

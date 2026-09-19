@@ -23,9 +23,134 @@
     "name": "Cloudflare Connector",
     "status": "active"
   },
+  "package_key": "cloudflare",
   "package_type": "connector_bundle",
+  "release": "2026.09.4",
   "schema_version": "connector_bundle.v1",
   "workflows": [
+    {
+      "definition_json": {
+        "connector": {
+          "config_id": "",
+          "family": ""
+        },
+        "steps": [
+          {
+            "auth_reference_id": "__use_default__",
+            "limits": {
+              "max_response_bytes": 1048576,
+              "timeout_seconds": 30
+            },
+            "normalization": {
+              "field_allowlist": [
+                "id",
+                "name"
+              ],
+              "field_mappings": [
+                {
+                  "output_field": "id",
+                  "source_path": "id"
+                }
+              ],
+              "mode": "records_contract_v1"
+            },
+            "output_alias": "get_1",
+            "pagination": {
+              "continuation": {
+                "enabled": true,
+                "max_partitions": 20
+              },
+              "max_pages": 1,
+              "mode": "page_number",
+              "page_param": "page",
+              "start_page": 1
+            },
+            "request": {
+              "path": "/client/v4/zones",
+              "query_params": {
+                "per_page": 50
+              }
+            },
+            "response_handling": {
+              "records_path": "result"
+            },
+            "step_key": "get_1",
+            "step_type": "connector_get"
+          },
+          {
+            "auth_reference_id": "__use_default__",
+            "iteration": {
+              "mode": "for_each_record",
+              "preserved_parent_fields": [
+                "id",
+                "name"
+              ],
+              "records_source": "get_1.records"
+            },
+            "limits": {
+              "max_response_bytes": 1048576,
+              "timeout_seconds": 30
+            },
+            "normalization": {
+              "field_allowlist": [
+                "status"
+              ],
+              "field_mappings": [
+                {
+                  "output_field": "status",
+                  "source_path": "status"
+                }
+              ],
+              "mode": "records_contract_v1"
+            },
+            "output_alias": "get_2",
+            "request": {
+              "path": "/client/v4/zones/{{ record.id }}/dnssec",
+              "query_params": {}
+            },
+            "response_handling": {
+              "records_path": "result"
+            },
+            "step_key": "get_2",
+            "step_type": "connector_get"
+          },
+          {
+            "input_source": "get_2.records",
+            "match_policy": "all",
+            "output_alias": "filter_1",
+            "rules": [
+              {
+                "field": "status",
+                "operator": "not_equals",
+                "value": "active"
+              }
+            ],
+            "step_key": "filter_1",
+            "step_type": "filter_rule"
+          },
+          {
+            "mapping": {
+              "control_test_alias": "dnssec_reported_state_result",
+              "control_test_code": "T-64",
+              "control_test_id": "00000000-0000-0000-0000-000000000000",
+              "data_source_label": "Cloudflare DNSSEC Reported State Result",
+              "evaluation_mode": "fail_when_records_present",
+              "notes": "Confirm which zones are included before enabling this workflow. Keep it in draft until missing zones and unknown DNSSEC status can be handled reliably. Reported DNSSEC status does not independently verify the DNS chain of trust."
+            },
+            "record_source": "filter_1.records",
+            "step_key": "result_1",
+            "step_type": "destination_control_test_result_add"
+          }
+        ],
+        "trigger": {
+          "mode": "manual"
+        }
+      },
+      "description": "Reviews the DNSSEC status reported by Cloudflare for the selected zones.",
+      "key": "dnssec_reported_state_result",
+      "name": "Cloudflare DNSSEC Reported State Result",
+      "status": "draft"
+    },
     {
       "definition_json": {
         "connector": {
@@ -130,7 +255,8 @@
           "mode": "manual"
         }
       },
-      "description": "Creates tasks for Cloudflare zones whose DNSSEC status is not active while excluding DS records and key material from worker output.",
+      "description": "Creates review tasks for Cloudflare zones whose reported DNSSEC status is not active.",
+      "key": "dnssec_status_review",
       "name": "Cloudflare DNSSEC Status Review",
       "status": "active"
     },
@@ -245,8 +371,137 @@
         }
       },
       "description": "Creates tasks for Cloudflare zones whose current origin encryption mode is neither Full (strict) nor the stronger Strict (SSL-Only Origin Pull) mode.",
+      "key": "encryption_mode_review",
       "name": "Cloudflare Encryption Mode Review",
       "status": "active"
+    },
+    {
+      "definition_json": {
+        "connector": {
+          "config_id": "",
+          "family": ""
+        },
+        "steps": [
+          {
+            "auth_reference_id": "__use_default__",
+            "limits": {
+              "max_response_bytes": 1048576,
+              "timeout_seconds": 30
+            },
+            "normalization": {
+              "field_allowlist": [
+                "id",
+                "name"
+              ],
+              "field_mappings": [
+                {
+                  "output_field": "id",
+                  "source_path": "id"
+                }
+              ],
+              "mode": "records_contract_v1"
+            },
+            "output_alias": "get_1",
+            "pagination": {
+              "continuation": {
+                "enabled": true,
+                "max_partitions": 20
+              },
+              "max_pages": 1,
+              "mode": "page_number",
+              "page_param": "page",
+              "start_page": 1
+            },
+            "request": {
+              "path": "/client/v4/zones",
+              "query_params": {
+                "per_page": 50
+              }
+            },
+            "response_handling": {
+              "records_path": "result"
+            },
+            "step_key": "get_1",
+            "step_type": "connector_get"
+          },
+          {
+            "auth_reference_id": "__use_default__",
+            "iteration": {
+              "mode": "for_each_record",
+              "preserved_parent_fields": [
+                "id",
+                "name"
+              ],
+              "records_source": "get_1.records"
+            },
+            "limits": {
+              "max_response_bytes": 1048576,
+              "timeout_seconds": 30
+            },
+            "normalization": {
+              "field_allowlist": [
+                "value"
+              ],
+              "field_mappings": [
+                {
+                  "output_field": "value",
+                  "source_path": "value"
+                }
+              ],
+              "mode": "records_contract_v1"
+            },
+            "output_alias": "get_2",
+            "request": {
+              "path": "/client/v4/zones/{{ record.id }}/settings/ssl",
+              "query_params": {}
+            },
+            "response_handling": {
+              "records_path": "result"
+            },
+            "step_key": "get_2",
+            "step_type": "connector_get"
+          },
+          {
+            "input_source": "get_2.records",
+            "match_policy": "all",
+            "output_alias": "filter_1",
+            "rules": [
+              {
+                "field": "value",
+                "operator": "not_equals",
+                "value": "strict"
+              },
+              {
+                "field": "value",
+                "operator": "not_equals",
+                "value": "origin_pull"
+              }
+            ],
+            "step_key": "filter_1",
+            "step_type": "filter_rule"
+          },
+          {
+            "mapping": {
+              "control_test_alias": "origin_certificate_validation_result",
+              "control_test_code": "T-63",
+              "control_test_id": "00000000-0000-0000-0000-000000000000",
+              "data_source_label": "Cloudflare Origin Certificate Validation Result",
+              "evaluation_mode": "fail_when_records_present",
+              "notes": "Confirm which zones are included before enabling this workflow. Keep it in draft until missing zones and unknown encryption settings can be distinguished from compliant settings. This review assesses reported configuration; it does not independently test the origin certificate or connection."
+            },
+            "record_source": "filter_1.records",
+            "step_key": "result_1",
+            "step_type": "destination_control_test_result_add"
+          }
+        ],
+        "trigger": {
+          "mode": "manual"
+        }
+      },
+      "description": "Reviews Cloudflare encryption settings to identify zones that do not require validation of the origin server certificate.",
+      "key": "origin_certificate_validation_result",
+      "name": "Cloudflare Origin Certificate Validation Result",
+      "status": "draft"
     },
     {
       "definition_json": {
@@ -382,7 +637,7 @@
           },
           {
             "mapping": {
-              "additional_information_template": "Cloudflare DNS record {{ record.name }} ({{ record.id }}) in zone {{ record.parent_context.name }} is a proxiable {{ record.type }} record with proxying disabled. Confirm whether direct DNS exposure is explicitly required before changing it. TTL: {{ record.ttl|default:'not returned' }}. Last modified: {{ record.modified_on|default:'not returned' }}. The Connector does not store the record content or origin address.",
+              "additional_information_template": "Cloudflare DNS record {{ record.name }} ({{ record.id }}) in zone {{ record.parent_context.name }} is a proxiable {{ record.type }} record with proxying disabled. Confirm whether direct DNS exposure is explicitly required before changing it. TTL: {% if record.ttl == None or record.ttl == '' %}not returned{% else %}{{ record.ttl }}{% endif %}. Last modified: {{ record.modified_on|default:'not returned' }}. The Connector does not store the record content or origin address.",
               "owner_user_id": "",
               "task_title_template": "Review unproxied Cloudflare DNS record {{ record.name }}"
             },
@@ -396,6 +651,7 @@
         }
       },
       "description": "Creates advisory tasks for proxiable A, AAAA, or CNAME records that are not proxied, without returning record content or origin addresses to Tenarie.",
+      "key": "unproxied_dns_records_review",
       "name": "Cloudflare Unproxied Public DNS Records Review",
       "status": "active"
     },
@@ -452,7 +708,7 @@
               "description_template": "Cloudflare zone {{ record.name }} ({{ record.id }}).",
               "external_id_template": "{{ record.id }}",
               "external_system": "cloudflare",
-              "notes_template": "Provider status: {{ record.status|default:'not returned' }}. Paused: {{ record.paused|default:'not returned' }}. Zone type: {{ record.type|default:'not returned' }}. Last modified: {{ record.modified_on|default:'not returned' }}.",
+              "notes_template": "Provider status: {{ record.status|default:'not returned' }}. Paused: {% if record.paused == None or record.paused == '' %}not returned{% else %}{{ record.paused }}{% endif %}. Zone type: {{ record.type|default:'not returned' }}. Last modified: {{ record.modified_on|default:'not returned' }}.",
               "owner_user_id": "",
               "title_template": "Cloudflare Zone {{ record.name }}"
             },
@@ -465,7 +721,8 @@
           "mode": "manual"
         }
       },
-      "description": "Creates or reuses one Tenarie Asset for each Cloudflare zone while excluding account, plan, and permission details from worker output.",
+      "description": "Creates or updates an asset for each Cloudflare zone, including its reported status.",
+      "key": "zone_inventory",
       "name": "Cloudflare Zone Inventory",
       "status": "active"
     },
@@ -537,7 +794,7 @@
           },
           {
             "mapping": {
-              "additional_information_template": "Cloudflare zone {{ record.name }} ({{ record.id }}) requires review. Provider status: {{ record.status|default:'not returned' }}. Paused: {{ record.paused|default:'not returned' }}. Zone type: {{ record.type|default:'not returned' }}. Confirm that the current zone state is intended and restore normal service where appropriate.",
+              "additional_information_template": "Cloudflare zone {{ record.name }} ({{ record.id }}) requires review. Provider status: {{ record.status|default:'not returned' }}. Paused: {% if record.paused == None or record.paused == '' %}not returned{% else %}{{ record.paused }}{% endif %}. Zone type: {{ record.type|default:'not returned' }}. Confirm that the current zone state is intended and restore normal service where appropriate.",
               "owner_user_id": "",
               "task_title_template": "Review Cloudflare zone status for {{ record.name }}"
             },
@@ -551,6 +808,7 @@
         }
       },
       "description": "Creates tasks for Cloudflare zones that are paused or are not reported as active.",
+      "key": "zone_status_review",
       "name": "Cloudflare Zone Status Review",
       "status": "active"
     }

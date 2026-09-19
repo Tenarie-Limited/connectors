@@ -1,6 +1,6 @@
 {
   "name": "Snyk Target Inventory",
-  "description": "Creates and synchronizes one Tenarie Asset for each Snyk Target while excluding repository URLs and integration details from worker output.",
+  "description": "Creates or updates an asset for each Snyk target.",
   "status": "draft",
   "definition_json": {
     "trigger": {
@@ -64,7 +64,7 @@
           "external_id_template": "{{ record.id }}",
           "title_template": "Snyk Target {{ record.display_name }}",
           "asset_type": "application",
-          "description_template": "Snyk Target {{ record.display_name }}. Private source: {{ record.is_private|default:'not returned' }}.",
+          "description_template": "Snyk Target {{ record.display_name }}. Private source: {% if record.is_private == None or record.is_private == '' %}not returned{% else %}{{ record.is_private }}{% endif %}.",
           "notes_template": "",
           "owner_user_id": "",
           "synchronization_mode": "provider_managed"

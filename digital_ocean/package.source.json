@@ -28,6 +28,8 @@
   "legacy_compatibility_artifact": true,
   "workflow_files": [
     "workflows/database_inventory.workflow.json",
+    "workflows/database_public_source_restriction_result.workflow.json",
+    "workflows/database_public_source_vulnerabilities.workflow.json",
     "workflows/database_public_trusted_sources.workflow.json",
     "workflows/droplet_inventory.workflow.json",
     "workflows/firewall_inventory.workflow.json",
@@ -39,5 +41,7 @@
     "workflows/monitoring_alert_policy_inventory.workflow.json",
     "workflows/monitoring_disabled_alert_policies.workflow.json",
     "workflows/monitoring_untargeted_alert_policies.workflow.json"
-  ]
+  ],
+  "package_key": "digital_ocean",
+  "release": "2026.09.4"
 }

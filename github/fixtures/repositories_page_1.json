@@ -16,7 +16,7 @@
     "disabled": false,
     "fork": false,
     "topics": [
-      "tenarie-private",
+      "expected-private",
       "security"
     ],
     "pushed_at": "2026-07-20T01:00:00Z",
@@ -75,7 +75,7 @@
     "disabled": false,
     "fork": false,
     "topics": [
-      "tenarie-private",
+      "expected-private",
       "integration"
     ],
     "pushed_at": "2026-07-22T03:00:00Z",

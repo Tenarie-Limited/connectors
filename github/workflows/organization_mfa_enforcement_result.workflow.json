@@ -1,0 +1,92 @@
+{
+  "name": "GitHub Organization MFA Enforcement Result",
+  "description": "Reviews whether the selected GitHub organization requires multi-factor authentication for its members.",
+  "status": "draft",
+  "definition_json": {
+    "trigger": {
+      "mode": "manual"
+    },
+    "connector": {
+      "family": "",
+      "config_id": ""
+    },
+    "steps": [
+      {
+        "step_key": "get_1",
+        "step_type": "connector_get",
+        "request": {
+          "path": "/orgs/REPLACE_WITH_GITHUB_ORGANIZATION",
+          "query_params": {}
+        },
+        "limits": {
+          "timeout_seconds": 30,
+          "max_response_bytes": 1048576
+        },
+        "response_handling": {
+          "records_path": "$"
+        },
+        "normalization": {
+          "mode": "records_contract_v1",
+          "field_mappings": [
+            {
+              "output_field": "id",
+              "source_path": "id"
+            },
+            {
+              "output_field": "login",
+              "source_path": "login"
+            },
+            {
+              "output_field": "two_factor_requirement_enabled",
+              "source_path": "two_factor_requirement_enabled"
+            }
+          ],
+          "field_coercions": [
+            {
+              "field": "id",
+              "coerce_to": "integer"
+            },
+            {
+              "field": "two_factor_requirement_enabled",
+              "coerce_to": "boolean"
+            }
+          ],
+          "field_allowlist": [
+            "id",
+            "login",
+            "two_factor_requirement_enabled"
+          ]
+        },
+        "auth_reference_id": "__use_default__",
+        "output_alias": "get_1"
+      },
+      {
+        "step_key": "filter_1",
+        "step_type": "filter_rule",
+        "input_source": "get_1.records",
+        "output_alias": "filter_1",
+        "match_policy": "all",
+        "rules": [
+          {
+            "field": "two_factor_requirement_enabled",
+            "operator": "not_equals",
+            "value": true
+          }
+        ]
+      },
+      {
+        "step_key": "result_1",
+        "step_type": "destination_control_test_result_add",
+        "record_source": "filter_1.records",
+        "mapping": {
+          "control_test_alias": "organization_mfa_enforcement_result",
+          "control_test_id": "00000000-0000-0000-0000-000000000000",
+          "control_test_code": "T-61",
+          "evaluation_mode": "fail_when_records_present",
+          "data_source_label": "GitHub Organization MFA Enforcement Result",
+          "notes": "Confirm the intended organization and permission to read its authentication policy before enabling this workflow. Keep this workflow in draft until missing policy information can be distinguished from a compliant policy. An empty response does not establish that multi-factor authentication is required."
+        }
+      }
+    ]
+  }
+}

@@ -1,0 +1,148 @@
+{
+  "name": "DigitalOcean Public Database Source Vulnerabilities",
+  "description": "Creates or links configuration Vulnerabilities for unrestricted public database trusted-source rules. This records configuration, not verified network reachability.",
+  "status": "draft",
+  "definition_json": {
+    "trigger": {
+      "mode": "manual"
+    },
+    "connector": {
+      "family": "",
+      "config_id": ""
+    },
+    "steps": [
+      {
+        "step_key": "get_1",
+        "step_type": "connector_get",
+        "request": {
+          "path": "/v2/databases",
+          "query_params": {}
+        },
+        "limits": {
+          "timeout_seconds": 30,
+          "max_response_bytes": 1048576
+        },
+        "response_handling": {
+          "records_path": "databases"
+        },
+        "normalization": {
+          "mode": "records_contract_v1",
+          "field_allowlist": [
+            "id",
+            "name"
+          ]
+        },
+        "auth_reference_id": "__use_default__",
+        "output_alias": "get_1"
+      },
+      {
+        "step_key": "get_2",
+        "step_type": "connector_get",
+        "request": {
+          "path": "/v2/databases/{{ record.id }}/firewall",
+          "query_params": {}
+        },
+        "limits": {
+          "timeout_seconds": 30,
+          "max_response_bytes": 1048576
+        },
+        "iteration": {
+          "mode": "for_each_record",
+          "records_source": "get_1.records",
+          "preserved_parent_fields": [
+            "id",
+            "name"
+          ]
+        },
+        "response_handling": {
+          "records_path": "rules"
+        },
+        "normalization": {
+          "mode": "records_contract_v1",
+          "field_allowlist": [
+            "uuid",
+            "cluster_uuid",
+            "type",
+            "value",
+            "description",
+            "created_at"
+          ],
+          "field_mappings": [
+            {
+              "output_field": "uuid",
+              "source_path": "uuid"
+            }
+          ]
+        },
+        "auth_reference_id": "__use_default__",
+        "output_alias": "get_2"
+      },
+      {
+        "step_key": "filter_1",
+        "step_type": "filter_rule",
+        "input_source": "get_2.records",
+        "output_alias": "filter_1",
+        "match_policy": "all",
+        "rules": [
+          {
+            "field": "type",
+            "operator": "equals",
+            "value": "ip_addr"
+          }
+        ]
+      },
+      {
+        "step_key": "filter_2",
+        "step_type": "filter_rule",
+        "input_source": "filter_1.records",
+        "output_alias": "filter_2",
+        "match_policy": "any",
+        "rules": [
+          {
+            "field": "value",
+            "operator": "equals",
+            "value": "0.0.0.0/0"
+          },
+          {
+            "field": "value",
+            "operator": "equals",
+            "value": "::/0"
+          }
+        ]
+      },
+      {
+        "step_key": "filter_3",
+        "step_type": "filter_rule",
+        "input_source": "filter_2.records",
+        "output_alias": "filter_3",
+        "match_policy": "all",
+        "rules": [
+          {
+            "field": "uuid",
+            "operator": "exists",
+            "value": true
+          }
+        ]
+      },
+      {
+        "step_key": "route_1",
+        "step_type": "destination_vulnerability_create",
+        "record_source": "filter_3.records",
+        "mapping": {
+          "external_system": "digital_ocean",
+          "external_id_template": "database:{{ record.parent_context.id }}:trusted-source:{{ record.uuid }}",
+          "name_template": "Unrestricted trusted source on DigitalOcean database {{ record.parent_context.name }}",
+          "description_template": "Database {{ record.parent_context.name }} ({{ record.parent_context.id }}) has trusted-source rule {{ record.uuid }} allowing {{ record.value }}. This is a configuration observation; actual reachability and compensating controls have not been tested.",
+          "business_impact_template": "",
+          "remediation_action_template": "Confirm whether the unrestricted source is approved. Replace it with the narrowest approved source and verify intended application connectivity before removing access.",
+          "cve_id_template": "",
+          "cwe_id_template": "",
+          "asset_alias_template": "{{ record.parent_context.id }}",
+          "source": "other",
+          "status": "open",
+          "owner_user_id": ""
+        }
+      }
+    ]
+  }
+}

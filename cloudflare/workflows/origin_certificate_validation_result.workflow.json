@@ -1,7 +1,7 @@
 {
-  "name": "Cloudflare DNSSEC Status Review",
-  "description": "Creates review tasks for Cloudflare zones whose reported DNSSEC status is not active.",
-  "status": "active",
+  "name": "Cloudflare Origin Certificate Validation Result",
+  "description": "Reviews Cloudflare encryption settings to identify zones that do not require validation of the origin server certificate.",
+  "status": "draft",
   "definition_json": {
     "trigger": {
       "mode": "manual"
@@ -42,6 +42,12 @@
           "field_allowlist": [
             "id",
             "name"
+          ],
+          "field_mappings": [
+            {
+              "output_field": "id",
+              "source_path": "id"
+            }
           ]
         },
         "auth_reference_id": "__use_default__",
@@ -51,7 +57,7 @@
         "step_key": "get_2",
         "step_type": "connector_get",
         "request": {
-          "path": "/client/v4/zones/{{ record.id }}/dnssec",
+          "path": "/client/v4/zones/{{ record.id }}/settings/ssl",
           "query_params": {}
         },
         "limits": {
@@ -71,9 +77,14 @@
         },
         "normalization": {
           "mode": "records_contract_v1",
+          "field_mappings": [
+            {
+              "output_field": "value",
+              "source_path": "value"
+            }
+          ],
           "field_allowlist": [
-            "status",
-            "modified_on"
+            "value"
           ]
         },
         "auth_reference_id": "__use_default__",
@@ -87,20 +98,28 @@
         "match_policy": "all",
         "rules": [
           {
-            "field": "status",
+            "field": "value",
             "operator": "not_equals",
-            "value": "active"
+            "value": "strict"
+          },
+          {
+            "field": "value",
+            "operator": "not_equals",
+            "value": "origin_pull"
           }
         ]
       },
       {
-        "step_key": "route_1",
-        "step_type": "destination_task_create",
+        "step_key": "result_1",
+        "step_type": "destination_control_test_result_add",
         "record_source": "filter_1.records",
         "mapping": {
-          "task_title_template": "Review DNSSEC for Cloudflare zone {{ record.parent_context.name }}",
-          "additional_information_template": "Cloudflare reports DNSSEC status {{ record.status|default:'not returned' }} for zone {{ record.parent_context.name }} ({{ record.parent_context.id }}). Review the zone and registrar configuration before enabling or repairing DNSSEC. Last modified: {{ record.modified_on|default:'not returned' }}.",
-          "owner_user_id": ""
+          "control_test_alias": "origin_certificate_validation_result",
+          "control_test_id": "00000000-0000-0000-0000-000000000000",
+          "control_test_code": "T-63",
+          "evaluation_mode": "fail_when_records_present",
+          "data_source_label": "Cloudflare Origin Certificate Validation Result",
+          "notes": "Confirm which zones are included before enabling this workflow. Keep it in draft until missing zones and unknown encryption settings can be distinguished from compliant settings. This review assesses reported configuration; it does not independently test the origin certificate or connection."
         }
       }
     ]

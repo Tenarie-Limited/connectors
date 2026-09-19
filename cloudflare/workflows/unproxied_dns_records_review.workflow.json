@@ -142,7 +142,7 @@
         "record_source": "filter_2.records",
         "mapping": {
           "task_title_template": "Review unproxied Cloudflare DNS record {{ record.name }}",
-          "additional_information_template": "Cloudflare DNS record {{ record.name }} ({{ record.id }}) in zone {{ record.parent_context.name }} is a proxiable {{ record.type }} record with proxying disabled. Confirm whether direct DNS exposure is explicitly required before changing it. TTL: {{ record.ttl|default:'not returned' }}. Last modified: {{ record.modified_on|default:'not returned' }}. The Connector does not store the record content or origin address.",
+          "additional_information_template": "Cloudflare DNS record {{ record.name }} ({{ record.id }}) in zone {{ record.parent_context.name }} is a proxiable {{ record.type }} record with proxying disabled. Confirm whether direct DNS exposure is explicitly required before changing it. TTL: {% if record.ttl == None or record.ttl == '' %}not returned{% else %}{{ record.ttl }}{% endif %}. Last modified: {{ record.modified_on|default:'not returned' }}. The Connector does not store the record content or origin address.",
           "owner_user_id": ""
         }
       }

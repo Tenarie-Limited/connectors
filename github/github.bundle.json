@@ -27,7 +27,9 @@
     "name": "GitHub Connector",
     "status": "active"
   },
+  "package_key": "github",
   "package_type": "connector_bundle",
+  "release": "2026.09.4",
   "schema_version": "connector_bundle.v1",
   "workflows": [
     {
@@ -112,7 +114,7 @@
           },
           {
             "mapping": {
-              "additional_information_template": "GitHub repository {{ record.full_name }} is marked with the public policy topic expected-private but currently reports visibility {{ record.visibility|default:'not returned' }}. Confirm whether the visibility changed accidentally and restrict access in GitHub when required. Repository ID: {{ record.id }}. Owner: {{ record.owner_login|default:'not returned' }}. Archived: {{ record.archived|default:'not returned' }}. Disabled: {{ record.disabled|default:'not returned' }}. Last updated: {{ record.updated_at|default:'not returned' }}.",
+              "additional_information_template": "GitHub repository {{ record.full_name }} is marked with the public policy topic expected-private but currently reports visibility {{ record.visibility|default:'not returned' }}. Confirm whether the visibility changed accidentally and restrict access in GitHub when required. Repository ID: {{ record.id }}. Owner: {{ record.owner_login|default:'not returned' }}. Archived: {% if record.archived == None or record.archived == '' %}not returned{% else %}{{ record.archived }}{% endif %}. Disabled: {% if record.disabled == None or record.disabled == '' %}not returned{% else %}{{ record.disabled }}{% endif %}. Last updated: {{ record.updated_at|default:'not returned' }}.",
               "owner_user_id": "",
               "task_title_template": "Review GitHub repository visibility for {{ record.full_name }}"
             },
@@ -126,6 +128,7 @@
         }
       },
       "description": "Creates tasks when a repository marked with the expected-private topic is not currently private.",
+      "key": "expected_private_repository_exposure_review",
       "name": "GitHub Expected Private Repository Exposure Review",
       "status": "active"
     },
@@ -146,6 +149,22 @@
               "field_allowlist": [
                 "id",
                 "login"
+              ],
+              "field_coercions": [
+                {
+                  "coerce_to": "integer",
+                  "field": "id"
+                }
+              ],
+              "field_mappings": [
+                {
+                  "output_field": "id",
+                  "source_path": "id"
+                },
+                {
+                  "output_field": "login",
+                  "source_path": "login"
+                }
               ],
               "mode": "records_contract_v1"
             },
@@ -177,11 +196,11 @@
           {
             "mapping": {
               "control_test_alias": "github_member_mfa",
-              "control_test_code": "CONFIGURE_AFTER_IMPORT",
+              "control_test_code": "T-60",
               "control_test_id": "00000000-0000-0000-0000-000000000000",
               "data_source_label": "GitHub member MFA review",
               "evaluation_mode": "fail_when_records_present",
-              "notes": "Complete GitHub collection passes when the organization-owner-only 2fa_disabled member filter returns no direct organization members. Returned members fail the result. Incomplete collection is inconclusive and provider failure is recorded as error."
+              "notes": "Reviews multi-factor authentication enrollment for direct members of the selected GitHub organization. Confirm organization-owner access and the intended membership scope before enabling this workflow. A complete collection passes when no members without multi-factor authentication are found and fails when such members are found. Incomplete collection is inconclusive; collection or data-processing failures are errors. This does not assess policy enforcement, authentication method strength, outside collaborators, or identities outside the selected organization."
             },
             "record_source": "get_1.records",
             "step_key": "route_1",
@@ -203,7 +222,101 @@
         }
       },
       "description": "Adds a Control Test Result and creates tasks for GitHub organization members returned by GitHub's two-factor-authentication-disabled filter.",
+      "key": "organization_members_without_mfa_review",
       "name": "GitHub Organization Members Without MFA Review",
+      "status": "draft"
+    },
+    {
+      "definition_json": {
+        "connector": {
+          "config_id": "",
+          "family": ""
+        },
+        "steps": [
+          {
+            "auth_reference_id": "__use_default__",
+            "limits": {
+              "max_response_bytes": 1048576,
+              "timeout_seconds": 30
+            },
+            "normalization": {
+              "field_allowlist": [
+                "id",
+                "login",
+                "two_factor_requirement_enabled"
+              ],
+              "field_coercions": [
+                {
+                  "coerce_to": "integer",
+                  "field": "id"
+                },
+                {
+                  "coerce_to": "boolean",
+                  "field": "two_factor_requirement_enabled"
+                }
+              ],
+              "field_mappings": [
+                {
+                  "output_field": "id",
+                  "source_path": "id"
+                },
+                {
+                  "output_field": "login",
+                  "source_path": "login"
+                },
+                {
+                  "output_field": "two_factor_requirement_enabled",
+                  "source_path": "two_factor_requirement_enabled"
+                }
+              ],
+              "mode": "records_contract_v1"
+            },
+            "output_alias": "get_1",
+            "request": {
+              "path": "/orgs/REPLACE_WITH_GITHUB_ORGANIZATION",
+              "query_params": {}
+            },
+            "response_handling": {
+              "records_path": "$"
+            },
+            "step_key": "get_1",
+            "step_type": "connector_get"
+          },
+          {
+            "input_source": "get_1.records",
+            "match_policy": "all",
+            "output_alias": "filter_1",
+            "rules": [
+              {
+                "field": "two_factor_requirement_enabled",
+                "operator": "not_equals",
+                "value": true
+              }
+            ],
+            "step_key": "filter_1",
+            "step_type": "filter_rule"
+          },
+          {
+            "mapping": {
+              "control_test_alias": "organization_mfa_enforcement_result",
+              "control_test_code": "T-61",
+              "control_test_id": "00000000-0000-0000-0000-000000000000",
+              "data_source_label": "GitHub Organization MFA Enforcement Result",
+              "evaluation_mode": "fail_when_records_present",
+              "notes": "Confirm the intended organization and permission to read its authentication policy before enabling this workflow. Keep this workflow in draft until missing policy information can be distinguished from a compliant policy. An empty response does not establish that multi-factor authentication is required."
+            },
+            "record_source": "filter_1.records",
+            "step_key": "result_1",
+            "step_type": "destination_control_test_result_add"
+          }
+        ],
+        "trigger": {
+          "mode": "manual"
+        }
+      },
+      "description": "Reviews whether the selected GitHub organization requires multi-factor authentication for its members.",
+      "key": "organization_mfa_enforcement_result",
+      "name": "GitHub Organization MFA Enforcement Result",
       "status": "draft"
     },
     {
@@ -254,7 +367,7 @@
           },
           {
             "mapping": {
-              "additional_information_template": "GitHub organization {{ record.login|default:'not returned' }} (organization ID {{ record.id|default:'not returned' }}) did not report two-factor authentication enforcement as enabled. Reported value: {{ record.two_factor_requirement_enabled|default:'not returned' }}. Confirm the request used an organization-owner token with access to full organization details, then enable an approved two-factor authentication requirement in GitHub.",
+              "additional_information_template": "GitHub organization {{ record.login|default:'not returned' }} (organization ID {{ record.id|default:'not returned' }}) did not report two-factor authentication enforcement as enabled. Reported value: {% if record.two_factor_requirement_enabled == None or record.two_factor_requirement_enabled == '' %}not returned{% else %}{{ record.two_factor_requirement_enabled }}{% endif %}. Confirm the request used an organization-owner token with access to full organization details, then enable an approved two-factor authentication requirement in GitHub.",
               "owner_user_id": "",
               "task_title_template": "Enable two-factor authentication enforcement for GitHub organization {{ record.login|default:'organization' }}"
             },
@@ -268,7 +381,118 @@
         }
       },
       "description": "Creates a task when GitHub does not report organization-wide two-factor authentication enforcement as enabled.",
+      "key": "organization_two_factor_enforcement_review",
       "name": "GitHub Organization Two-Factor Authentication Enforcement Review",
+      "status": "draft"
+    },
+    {
+      "definition_json": {
+        "connector": {
+          "config_id": "",
+          "family": ""
+        },
+        "steps": [
+          {
+            "auth_reference_id": "__use_default__",
+            "limits": {
+              "max_response_bytes": 1048576,
+              "timeout_seconds": 30
+            },
+            "normalization": {
+              "field_allowlist": [
+                "id",
+                "topics",
+                "visibility"
+              ],
+              "field_coercions": [
+                {
+                  "coerce_to": "integer",
+                  "field": "id"
+                }
+              ],
+              "field_mappings": [
+                {
+                  "output_field": "id",
+                  "source_path": "id"
+                },
+                {
+                  "output_field": "topics",
+                  "source_path": "topics"
+                },
+                {
+                  "output_field": "visibility",
+                  "source_path": "visibility"
+                }
+              ],
+              "mode": "records_contract_v1"
+            },
+            "output_alias": "get_1",
+            "pagination": {
+              "continuation": {
+                "enabled": true,
+                "max_partitions": 20
+              },
+              "max_pages": 1,
+              "mode": "page_number",
+              "page_param": "page",
+              "start_page": 1
+            },
+            "request": {
+              "path": "/user/repos",
+              "query_params": {
+                "affiliation": "owner,collaborator,organization_member",
+                "direction": "asc",
+                "per_page": 50,
+                "sort": "full_name",
+                "visibility": "all"
+              }
+            },
+            "response_handling": {
+              "records_path": "$"
+            },
+            "step_key": "get_1",
+            "step_type": "connector_get"
+          },
+          {
+            "input_source": "get_1.records",
+            "match_policy": "all",
+            "output_alias": "filter_1",
+            "rules": [
+              {
+                "field": "topics",
+                "operator": "contains",
+                "value": "expected-private"
+              },
+              {
+                "field": "visibility",
+                "operator": "not_equals",
+                "value": "private"
+              }
+            ],
+            "step_key": "filter_1",
+            "step_type": "filter_rule"
+          },
+          {
+            "mapping": {
+              "control_test_alias": "repository_confidentiality_result",
+              "control_test_code": "T-62",
+              "control_test_id": "00000000-0000-0000-0000-000000000000",
+              "data_source_label": "GitHub Repository Confidentiality Result",
+              "evaluation_mode": "fail_when_records_present",
+              "notes": "Keep this workflow in draft until the repositories that must remain private are identified and their visibility can be confirmed. Missing repositories, an empty selection, or unknown visibility do not establish compliance with confidentiality requirements."
+            },
+            "record_source": "filter_1.records",
+            "step_key": "result_1",
+            "step_type": "destination_control_test_result_add"
+          }
+        ],
+        "trigger": {
+          "mode": "manual"
+        }
+      },
+      "description": "Reviews repository visibility to help identify repositories that may conflict with your organization's confidentiality requirements. Confirm which repositories must remain private before enabling this workflow.",
+      "key": "repository_confidentiality_result",
+      "name": "GitHub Repository Confidentiality Result",
       "status": "draft"
     },
     {
@@ -341,7 +565,7 @@
               "description_template": "GitHub repository {{ record.full_name }} with current visibility {{ record.visibility|default:'not returned' }}.",
               "external_id_template": "{{ record.id }}",
               "external_system": "github",
-              "notes_template": "Owner: {{ record.owner_login|default:'not returned' }}. Default branch: {{ record.default_branch|default:'not returned' }}. Private: {{ record.private|default:'not returned' }}. Archived: {{ record.archived|default:'not returned' }}. Disabled: {{ record.disabled|default:'not returned' }}. Fork: {{ record.fork|default:'not returned' }}. Topics: {{ record.topics|default:'none returned' }}. Last push: {{ record.pushed_at|default:'not returned' }}. Last updated: {{ record.updated_at|default:'not returned' }}.",
+              "notes_template": "Owner: {{ record.owner_login|default:'not returned' }}. Default branch: {{ record.default_branch|default:'not returned' }}. Private: {% if record.private == None or record.private == '' %}not returned{% else %}{{ record.private }}{% endif %}. Archived: {% if record.archived == None or record.archived == '' %}not returned{% else %}{{ record.archived }}{% endif %}. Disabled: {% if record.disabled == None or record.disabled == '' %}not returned{% else %}{{ record.disabled }}{% endif %}. Fork: {% if record.fork == None or record.fork == '' %}not returned{% else %}{{ record.fork }}{% endif %}. Topics: {{ record.topics|default:'none returned' }}. Last push: {{ record.pushed_at|default:'not returned' }}. Last updated: {{ record.updated_at|default:'not returned' }}.",
               "owner_user_id": "",
               "title_template": "GitHub Repository {{ record.full_name }}"
             },
@@ -355,6 +579,7 @@
         }
       },
       "description": "Creates or reuses one Tenarie Asset for each GitHub repository available to the connected token and reports its current visibility.",
+      "key": "repository_inventory",
       "name": "GitHub Repository Inventory",
       "status": "active"
     }

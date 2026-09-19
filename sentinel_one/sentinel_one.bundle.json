@@ -28,7 +28,9 @@
     "name": "SentinelOne Connector",
     "status": "draft"
   },
+  "package_key": "sentinel_one",
   "package_type": "connector_bundle",
+  "release": "2026.09.4",
   "schema_version": "connector_bundle.v1",
   "workflows": [
     {
@@ -111,6 +113,7 @@
         }
       },
       "description": "Adds one Control Test Result that passes when SentinelOne reports at least one installed and active Agent in the configured scope.",
+      "key": "active_agent_presence",
       "name": "SentinelOne Active Agent Presence",
       "status": "draft"
     },
@@ -241,7 +244,7 @@
           {
             "mapping": {
               "asset_type": "infrastructure",
-              "description_template": "SentinelOne Agent {{ record.id }}. Computer name: {{ record.computer_name|default:'not returned' }}. Agent version: {{ record.agent_version|default:'not returned' }}. Operating system: {{ record.os_name|default:'not returned' }} {{ record.os_arch|default:'' }}. Site: {{ record.site_name|default:'not returned' }}. Group: {{ record.group_name|default:'not returned' }}. Registered: {{ record.registered_at|default:'not returned' }}. Last active: {{ record.last_active_date|default:'not returned' }}. Active: {{ record.is_active|default:'not returned' }}. Up to date: {{ record.is_up_to_date|default:'not returned' }}. Network status: {{ record.network_status|default:'not returned' }}. Pending uninstall: {{ record.is_pending_uninstall|default:'not returned' }}. Uninstalled: {{ record.is_uninstalled|default:'not returned' }}. Decommissioned: {{ record.is_decommissioned|default:'not returned' }}. Active protection: {{ record.active_protection|default:'not returned' }}.",
+              "description_template": "SentinelOne Agent {{ record.id }}. Computer name: {{ record.computer_name|default:'not returned' }}. Agent version: {{ record.agent_version|default:'not returned' }}. Operating system: {{ record.os_name|default:'not returned' }} {{ record.os_arch|default:'' }}. Site: {{ record.site_name|default:'not returned' }}. Group: {{ record.group_name|default:'not returned' }}. Registered: {{ record.registered_at|default:'not returned' }}. Last active: {{ record.last_active_date|default:'not returned' }}. Active: {% if record.is_active == None or record.is_active == '' %}not returned{% else %}{{ record.is_active }}{% endif %}. Up to date: {% if record.is_up_to_date == None or record.is_up_to_date == '' %}not returned{% else %}{{ record.is_up_to_date }}{% endif %}. Network status: {{ record.network_status|default:'not returned' }}. Pending uninstall: {% if record.is_pending_uninstall == None or record.is_pending_uninstall == '' %}not returned{% else %}{{ record.is_pending_uninstall }}{% endif %}. Uninstalled: {% if record.is_uninstalled == None or record.is_uninstalled == '' %}not returned{% else %}{{ record.is_uninstalled }}{% endif %}. Decommissioned: {% if record.is_decommissioned == None or record.is_decommissioned == '' %}not returned{% else %}{{ record.is_decommissioned }}{% endif %}. Active protection: {% if record.active_protection == None or record.active_protection == '' %}not returned{% else %}{{ record.active_protection }}{% endif %}.",
               "external_id_template": "{{ record.id }}",
               "external_system": "sentinel_one",
               "notes_template": "",
@@ -259,7 +262,628 @@
         }
       },
       "description": "Creates and synchronizes one Tenarie infrastructure Asset for each SentinelOne Agent returned within the configured bounded scope.",
+      "key": "agent_inventory",
       "name": "SentinelOne Agent Inventory",
+      "status": "draft"
+    },
+    {
+      "definition_json": {
+        "connector": {
+          "config_id": "",
+          "family": ""
+        },
+        "steps": [
+          {
+            "auth_reference_id": "__use_default__",
+            "limits": {
+              "max_response_bytes": 1048576,
+              "timeout_seconds": 30
+            },
+            "normalization": {
+              "field_allowlist": [
+                "is_active",
+                "is_uninstalled",
+                "is_decommissioned",
+                "is_pending_uninstall",
+                "id"
+              ],
+              "field_coercions": [
+                {
+                  "coerce_to": "boolean",
+                  "field": "is_active"
+                },
+                {
+                  "coerce_to": "boolean",
+                  "field": "is_uninstalled"
+                },
+                {
+                  "coerce_to": "boolean",
+                  "field": "is_decommissioned"
+                },
+                {
+                  "coerce_to": "boolean",
+                  "field": "is_pending_uninstall"
+                }
+              ],
+              "field_mappings": [
+                {
+                  "output_field": "is_active",
+                  "source_path": "isActive"
+                },
+                {
+                  "output_field": "is_uninstalled",
+                  "source_path": "isUninstalled"
+                },
+                {
+                  "output_field": "is_decommissioned",
+                  "source_path": "isDecommissioned"
+                },
+                {
+                  "output_field": "is_pending_uninstall",
+                  "source_path": "isPendingUninstall"
+                },
+                {
+                  "output_field": "id",
+                  "source_path": "id"
+                }
+              ],
+              "mode": "records_contract_v1"
+            },
+            "output_alias": "get_1",
+            "pagination": {
+              "limit_param": "limit",
+              "max_pages": 5,
+              "mode": "offset_limit",
+              "offset_param": "skip",
+              "omit_initial_offset": true,
+              "page_size": 100,
+              "start_offset": 0
+            },
+            "request": {
+              "path": "/web/api/v2.1/agents",
+              "query_params": {}
+            },
+            "response_handling": {
+              "records_path": "data"
+            },
+            "step_key": "get_1",
+            "step_type": "connector_get"
+          },
+          {
+            "input_source": "get_1.records",
+            "match_policy": "all",
+            "output_alias": "filter_1",
+            "rules": [
+              {
+                "field": "is_active",
+                "operator": "equals",
+                "value": false
+              },
+              {
+                "field": "is_uninstalled",
+                "operator": "equals",
+                "value": false
+              },
+              {
+                "field": "is_decommissioned",
+                "operator": "equals",
+                "value": false
+              },
+              {
+                "field": "is_pending_uninstall",
+                "operator": "equals",
+                "value": false
+              }
+            ],
+            "step_key": "filter_1",
+            "step_type": "filter_rule"
+          },
+          {
+            "mapping": {
+              "control_test_alias": "eligible_agent_active_result",
+              "control_test_code": "T-66",
+              "control_test_id": "00000000-0000-0000-0000-000000000000",
+              "data_source_label": "SentinelOne Eligible Agent Active Result",
+              "evaluation_mode": "fail_when_records_present",
+              "notes": "Confirm which agents are required to be monitored before enabling this workflow. Keep it in draft until the agent list is complete and each agent can be identified reliably. An empty agent list does not establish that all required agents are active."
+            },
+            "record_source": "filter_1.records",
+            "step_key": "result_1",
+            "step_type": "destination_control_test_result_add"
+          }
+        ],
+        "trigger": {
+          "mode": "manual"
+        }
+      },
+      "description": "Reviews whether the selected SentinelOne agents are reported as active.",
+      "key": "eligible_agent_active_result",
+      "name": "SentinelOne Eligible Agent Active Result",
+      "status": "draft"
+    },
+    {
+      "definition_json": {
+        "connector": {
+          "config_id": "",
+          "family": ""
+        },
+        "steps": [
+          {
+            "auth_reference_id": "__use_default__",
+            "limits": {
+              "max_response_bytes": 1048576,
+              "timeout_seconds": 30
+            },
+            "normalization": {
+              "field_allowlist": [
+                "is_up_to_date",
+                "is_uninstalled",
+                "is_decommissioned",
+                "is_pending_uninstall",
+                "id"
+              ],
+              "field_coercions": [
+                {
+                  "coerce_to": "boolean",
+                  "field": "is_up_to_date"
+                },
+                {
+                  "coerce_to": "boolean",
+                  "field": "is_uninstalled"
+                },
+                {
+                  "coerce_to": "boolean",
+                  "field": "is_decommissioned"
+                },
+                {
+                  "coerce_to": "boolean",
+                  "field": "is_pending_uninstall"
+                }
+              ],
+              "field_mappings": [
+                {
+                  "output_field": "is_up_to_date",
+                  "source_path": "isUpToDate"
+                },
+                {
+                  "output_field": "is_uninstalled",
+                  "source_path": "isUninstalled"
+                },
+                {
+                  "output_field": "is_decommissioned",
+                  "source_path": "isDecommissioned"
+                },
+                {
+                  "output_field": "is_pending_uninstall",
+                  "source_path": "isPendingUninstall"
+                },
+                {
+                  "output_field": "id",
+                  "source_path": "id"
+                }
+              ],
+              "mode": "records_contract_v1"
+            },
+            "output_alias": "get_1",
+            "pagination": {
+              "limit_param": "limit",
+              "max_pages": 5,
+              "mode": "offset_limit",
+              "offset_param": "skip",
+              "omit_initial_offset": true,
+              "page_size": 100,
+              "start_offset": 0
+            },
+            "request": {
+              "path": "/web/api/v2.1/agents",
+              "query_params": {}
+            },
+            "response_handling": {
+              "records_path": "data"
+            },
+            "step_key": "get_1",
+            "step_type": "connector_get"
+          },
+          {
+            "input_source": "get_1.records",
+            "match_policy": "all",
+            "output_alias": "filter_1",
+            "rules": [
+              {
+                "field": "is_up_to_date",
+                "operator": "equals",
+                "value": false
+              },
+              {
+                "field": "is_uninstalled",
+                "operator": "equals",
+                "value": false
+              },
+              {
+                "field": "is_decommissioned",
+                "operator": "equals",
+                "value": false
+              },
+              {
+                "field": "is_pending_uninstall",
+                "operator": "equals",
+                "value": false
+              }
+            ],
+            "step_key": "filter_1",
+            "step_type": "filter_rule"
+          },
+          {
+            "mapping": {
+              "control_test_alias": "eligible_agent_currency_result",
+              "control_test_code": "T-67",
+              "control_test_id": "00000000-0000-0000-0000-000000000000",
+              "data_source_label": "SentinelOne Eligible Agent Currency Result",
+              "evaluation_mode": "fail_when_records_present",
+              "notes": "Confirm which agents are included and what counts as an acceptable version before enabling this workflow. Keep it in draft until the agent list and identities are reliable and the provider's version status matches that policy. An empty agent list does not establish that required agents are current."
+            },
+            "record_source": "filter_1.records",
+            "step_key": "result_1",
+            "step_type": "destination_control_test_result_add"
+          }
+        ],
+        "trigger": {
+          "mode": "manual"
+        }
+      },
+      "description": "Reviews whether the selected SentinelOne agents are reported as out of date.",
+      "key": "eligible_agent_currency_result",
+      "name": "SentinelOne Eligible Agent Currency Result",
+      "status": "draft"
+    },
+    {
+      "definition_json": {
+        "connector": {
+          "config_id": "",
+          "family": ""
+        },
+        "steps": [
+          {
+            "auth_reference_id": "__use_default__",
+            "limits": {
+              "max_response_bytes": 1048576,
+              "timeout_seconds": 30
+            },
+            "normalization": {
+              "field_allowlist": [
+                "id",
+                "computer_name",
+                "agent_version",
+                "os_name",
+                "os_arch",
+                "site_name",
+                "group_name",
+                "registered_at",
+                "last_active_date",
+                "is_active",
+                "is_up_to_date",
+                "network_status",
+                "is_pending_uninstall",
+                "is_uninstalled",
+                "is_decommissioned",
+                "active_protection",
+                "external_id"
+              ],
+              "field_mappings": [
+                {
+                  "output_field": "computer_name",
+                  "source_path": "computerName"
+                },
+                {
+                  "output_field": "agent_version",
+                  "source_path": "agentVersion"
+                },
+                {
+                  "output_field": "os_name",
+                  "source_path": "osName"
+                },
+                {
+                  "output_field": "os_arch",
+                  "source_path": "osArch"
+                },
+                {
+                  "output_field": "site_name",
+                  "source_path": "siteName"
+                },
+                {
+                  "output_field": "group_name",
+                  "source_path": "groupName"
+                },
+                {
+                  "output_field": "registered_at",
+                  "source_path": "registeredAt"
+                },
+                {
+                  "output_field": "last_active_date",
+                  "source_path": "lastActiveDate"
+                },
+                {
+                  "output_field": "is_active",
+                  "source_path": "isActive"
+                },
+                {
+                  "output_field": "is_up_to_date",
+                  "source_path": "isUpToDate"
+                },
+                {
+                  "output_field": "network_status",
+                  "source_path": "networkStatus"
+                },
+                {
+                  "output_field": "is_pending_uninstall",
+                  "source_path": "isPendingUninstall"
+                },
+                {
+                  "output_field": "is_uninstalled",
+                  "source_path": "isUninstalled"
+                },
+                {
+                  "output_field": "is_decommissioned",
+                  "source_path": "isDecommissioned"
+                },
+                {
+                  "output_field": "active_protection",
+                  "source_path": "activeProtection"
+                },
+                {
+                  "output_field": "external_id",
+                  "source_path": "id"
+                }
+              ],
+              "mode": "records_contract_v1"
+            },
+            "output_alias": "get_1",
+            "pagination": {
+              "limit_param": "limit",
+              "max_pages": 5,
+              "mode": "offset_limit",
+              "offset_param": "skip",
+              "omit_initial_offset": true,
+              "page_size": 100,
+              "start_offset": 0
+            },
+            "request": {
+              "path": "/web/api/v2.1/agents",
+              "query_params": {}
+            },
+            "response_handling": {
+              "records_path": "data"
+            },
+            "step_key": "get_1",
+            "step_type": "connector_get"
+          },
+          {
+            "input_source": "get_1.records",
+            "match_policy": "all",
+            "output_alias": "filter_1",
+            "rules": [
+              {
+                "field": "is_active",
+                "operator": "equals",
+                "value": false
+              },
+              {
+                "field": "is_uninstalled",
+                "operator": "equals",
+                "value": false
+              },
+              {
+                "field": "is_decommissioned",
+                "operator": "equals",
+                "value": false
+              },
+              {
+                "field": "is_pending_uninstall",
+                "operator": "equals",
+                "value": false
+              },
+              {
+                "field": "external_id",
+                "operator": "exists",
+                "value": true
+              }
+            ],
+            "step_key": "filter_1",
+            "step_type": "filter_rule"
+          },
+          {
+            "mapping": {
+              "additional_information_template": "SentinelOne agent {{ record.id }} ({{ record.computer_name }}) reports inactive. Site: {{ record.site_name }}. Group: {{ record.group_name }}. Version: {{ record.agent_version }}. Last active reported by provider: {{ record.last_active_date }}. Confirm the expected device state and investigate in SentinelOne. This observation establishes neither a time-based SLA breach nor protection effectiveness. Existing Tasks are reused without reopening or updating.",
+              "owner_user_id": "",
+              "task_title_template": "SentinelOne Inactive Agent Review: {{ record.computer_name }}"
+            },
+            "record_source": "filter_1.records",
+            "step_key": "route_1",
+            "step_type": "destination_task_create"
+          }
+        ],
+        "trigger": {
+          "mode": "manual"
+        }
+      },
+      "description": "Creates review Tasks for installed, non-decommissioned agents that reports inactive, excluding pending uninstall. This is a provider flag observation, not an elapsed-time or protection test.",
+      "key": "inactive_agent_review",
+      "name": "SentinelOne Inactive Agent Review",
+      "status": "draft"
+    },
+    {
+      "definition_json": {
+        "connector": {
+          "config_id": "",
+          "family": ""
+        },
+        "steps": [
+          {
+            "auth_reference_id": "__use_default__",
+            "limits": {
+              "max_response_bytes": 1048576,
+              "timeout_seconds": 30
+            },
+            "normalization": {
+              "field_allowlist": [
+                "id",
+                "computer_name",
+                "agent_version",
+                "os_name",
+                "os_arch",
+                "site_name",
+                "group_name",
+                "registered_at",
+                "last_active_date",
+                "is_active",
+                "is_up_to_date",
+                "network_status",
+                "is_pending_uninstall",
+                "is_uninstalled",
+                "is_decommissioned",
+                "active_protection",
+                "external_id"
+              ],
+              "field_mappings": [
+                {
+                  "output_field": "computer_name",
+                  "source_path": "computerName"
+                },
+                {
+                  "output_field": "agent_version",
+                  "source_path": "agentVersion"
+                },
+                {
+                  "output_field": "os_name",
+                  "source_path": "osName"
+                },
+                {
+                  "output_field": "os_arch",
+                  "source_path": "osArch"
+                },
+                {
+                  "output_field": "site_name",
+                  "source_path": "siteName"
+                },
+                {
+                  "output_field": "group_name",
+                  "source_path": "groupName"
+                },
+                {
+                  "output_field": "registered_at",
+                  "source_path": "registeredAt"
+                },
+                {
+                  "output_field": "last_active_date",
+                  "source_path": "lastActiveDate"
+                },
+                {
+                  "output_field": "is_active",
+                  "source_path": "isActive"
+                },
+                {
+                  "output_field": "is_up_to_date",
+                  "source_path": "isUpToDate"
+                },
+                {
+                  "output_field": "network_status",
+                  "source_path": "networkStatus"
+                },
+                {
+                  "output_field": "is_pending_uninstall",
+                  "source_path": "isPendingUninstall"
+                },
+                {
+                  "output_field": "is_uninstalled",
+                  "source_path": "isUninstalled"
+                },
+                {
+                  "output_field": "is_decommissioned",
+                  "source_path": "isDecommissioned"
+                },
+                {
+                  "output_field": "active_protection",
+                  "source_path": "activeProtection"
+                },
+                {
+                  "output_field": "external_id",
+                  "source_path": "id"
+                }
+              ],
+              "mode": "records_contract_v1"
+            },
+            "output_alias": "get_1",
+            "pagination": {
+              "limit_param": "limit",
+              "max_pages": 5,
+              "mode": "offset_limit",
+              "offset_param": "skip",
+              "omit_initial_offset": true,
+              "page_size": 100,
+              "start_offset": 0
+            },
+            "request": {
+              "path": "/web/api/v2.1/agents",
+              "query_params": {}
+            },
+            "response_handling": {
+              "records_path": "data"
+            },
+            "step_key": "get_1",
+            "step_type": "connector_get"
+          },
+          {
+            "input_source": "get_1.records",
+            "match_policy": "all",
+            "output_alias": "filter_1",
+            "rules": [
+              {
+                "field": "is_up_to_date",
+                "operator": "equals",
+                "value": false
+              },
+              {
+                "field": "is_uninstalled",
+                "operator": "equals",
+                "value": false
+              },
+              {
+                "field": "is_decommissioned",
+                "operator": "equals",
+                "value": false
+              },
+              {
+                "field": "is_pending_uninstall",
+                "operator": "equals",
+                "value": false
+              },
+              {
+                "field": "external_id",
+                "operator": "exists",
+                "value": true
+              }
+            ],
+            "step_key": "filter_1",
+            "step_type": "filter_rule"
+          },
+          {
+            "mapping": {
+              "additional_information_template": "SentinelOne agent {{ record.id }} ({{ record.computer_name }}) reports not up to date. Site: {{ record.site_name }}. Group: {{ record.group_name }}. Version: {{ record.agent_version }}. Last active reported by provider: {{ record.last_active_date }}. Confirm the expected device state and investigate in SentinelOne. This observation establishes neither a time-based SLA breach nor protection effectiveness. Existing Tasks are reused without reopening or updating.",
+              "owner_user_id": "",
+              "task_title_template": "SentinelOne Outdated Agent Review: {{ record.computer_name }}"
+            },
+            "record_source": "filter_1.records",
+            "step_key": "route_1",
+            "step_type": "destination_task_create"
+          }
+        ],
+        "trigger": {
+          "mode": "manual"
+        }
+      },
+      "description": "Creates review Tasks for installed, non-decommissioned agents that reports not up to date, excluding pending uninstall. This is a provider flag observation, not an elapsed-time or protection test.",
+      "key": "outdated_agent_review",
+      "name": "SentinelOne Outdated Agent Review",
       "status": "draft"
     }
   ]

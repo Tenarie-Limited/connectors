@@ -1,6 +1,6 @@
 {
   "name": "DigitalOcean Insecure Firewall Ports Check",
-  "description": "Creates tasks when DigitalOcean firewall inbound rules expose FTP, Telnet, or all ports to the public internet.",
+  "description": "Creates review tasks for public TCP inbound rules with exact port values 21, 23, 0, or all. Ranges and UDP are not evaluated; an empty result is not proof of secure firewall configuration.",
   "status": "active",
   "definition_json": {
     "trigger": {
@@ -73,28 +73,47 @@
         "rules": [
           {
             "field": "ports",
-            "operator": "contains",
+            "operator": "equals",
             "value": "21"
           },
           {
             "field": "ports",
-            "operator": "contains",
+            "operator": "equals",
             "value": "23"
           },
           {
             "field": "ports",
-            "operator": "contains",
+            "operator": "equals",
+            "value": "0"
+          },
+          {
+            "field": "ports",
+            "operator": "equals",
             "value": "all"
+          }
+        ]
+      },
+      {
+        "step_key": "filter_3",
+        "step_type": "filter_rule",
+        "input_source": "filter_2.records",
+        "output_alias": "filter_3",
+        "match_policy": "all",
+        "rules": [
+          {
+            "field": "protocol",
+            "operator": "equals",
+            "value": "tcp"
           }
         ]
       },
       {
         "step_key": "route_1",
         "step_type": "destination_task_create",
-        "record_source": "filter_2.records",
+        "record_source": "filter_3.records",
         "mapping": {
-          "task_title_template": "DigitalOcean firewall {{ record.parent_context.name }} exposes insecure ports {{ record.ports }}",
-          "additional_information_template": "Firewall {{ record.parent_context.name }} ({{ record.parent_context.id }}) currently allows public inbound access to {{ record.protocol|default:'unknown protocol' }} ports {{ record.ports }} from {{ record.sources.addresses|default:'unknown sources' }}. Review the inbound rule and remove FTP, Telnet, or unrestricted all-port exposure where it is not explicitly required.",
+          "task_title_template": "Review DigitalOcean firewall {{ record.parent_context.name }} public TCP ports {{ record.ports }}",
+          "additional_information_template": "Firewall {{ record.parent_context.name }} ({{ record.parent_context.id }}) allows public TCP inbound access with exact port value {{ record.ports }} from {{ record.sources.addresses }}. Values 0 and all represent all ports. Review whether this rule is approved and restrict it where required. This check does not evaluate ranges, UDP, host controls, or actual reachability.",
           "owner_user_id": ""
         }
       }

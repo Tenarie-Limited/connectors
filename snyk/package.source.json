@@ -31,8 +31,12 @@
     }
   ],
   "workflow_files": [
+    "workflows/application_finding_threshold_result.workflow.json",
+    "workflows/high_critical_issue_review.workflow.json",
     "workflows/open_issues.workflow.json",
     "workflows/project_inventory.workflow.json",
     "workflows/target_inventory.workflow.json"
-  ]
+  ],
+  "package_key": "snyk",
+  "release": "2026.09.4"
 }

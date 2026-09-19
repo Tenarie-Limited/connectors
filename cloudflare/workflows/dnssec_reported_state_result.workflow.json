@@ -1,7 +1,7 @@
 {
-  "name": "Cloudflare DNSSEC Status Review",
-  "description": "Creates review tasks for Cloudflare zones whose reported DNSSEC status is not active.",
-  "status": "active",
+  "name": "Cloudflare DNSSEC Reported State Result",
+  "description": "Reviews the DNSSEC status reported by Cloudflare for the selected zones.",
+  "status": "draft",
   "definition_json": {
     "trigger": {
       "mode": "manual"
@@ -42,6 +42,12 @@
           "field_allowlist": [
             "id",
             "name"
+          ],
+          "field_mappings": [
+            {
+              "output_field": "id",
+              "source_path": "id"
+            }
           ]
         },
         "auth_reference_id": "__use_default__",
@@ -71,9 +77,14 @@
         },
         "normalization": {
           "mode": "records_contract_v1",
+          "field_mappings": [
+            {
+              "output_field": "status",
+              "source_path": "status"
+            }
+          ],
           "field_allowlist": [
-            "status",
-            "modified_on"
+            "status"
           ]
         },
         "auth_reference_id": "__use_default__",
@@ -94,13 +105,16 @@
         ]
       },
       {
-        "step_key": "route_1",
-        "step_type": "destination_task_create",
+        "step_key": "result_1",
+        "step_type": "destination_control_test_result_add",
         "record_source": "filter_1.records",
         "mapping": {
-          "task_title_template": "Review DNSSEC for Cloudflare zone {{ record.parent_context.name }}",
-          "additional_information_template": "Cloudflare reports DNSSEC status {{ record.status|default:'not returned' }} for zone {{ record.parent_context.name }} ({{ record.parent_context.id }}). Review the zone and registrar configuration before enabling or repairing DNSSEC. Last modified: {{ record.modified_on|default:'not returned' }}.",
-          "owner_user_id": ""
+          "control_test_alias": "dnssec_reported_state_result",
+          "control_test_id": "00000000-0000-0000-0000-000000000000",
+          "control_test_code": "T-64",
+          "evaluation_mode": "fail_when_records_present",
+          "data_source_label": "Cloudflare DNSSEC Reported State Result",
+          "notes": "Confirm which zones are included before enabling this workflow. Keep it in draft until missing zones and unknown DNSSEC status can be handled reliably. Reported DNSSEC status does not independently verify the DNS chain of trust."
         }
       }
     ]

@@ -23,7 +23,9 @@
     "name": "DigitalOcean Connector",
     "status": "active"
   },
+  "package_key": "digital_ocean",
   "package_type": "connector_bundle",
+  "release": "2026.09.4",
   "schema_version": "connector_bundle.v1",
   "workflows": [
     {
@@ -68,30 +70,16 @@
             "step_type": "connector_get"
           },
           {
-            "input_source": "get_1.records",
-            "match_policy": "all",
-            "output_alias": "filter_1",
-            "rules": [
-              {
-                "field": "status",
-                "operator": "equals",
-                "value": "online"
-              }
-            ],
-            "step_key": "filter_1",
-            "step_type": "filter_rule"
-          },
-          {
             "mapping": {
               "asset_type": "infrastructure",
               "description_template": "DigitalOcean managed {{ record.engine|default:'database' }} cluster {{ record.name }} ({{ record.id }}).",
               "external_id_template": "{{ record.id }}",
               "external_system": "digital_ocean",
-              "notes_template": "Provider status: {{ record.status|default:'unknown' }}. Engine version: {{ record.semantic_version|default:record.version|default:'not returned' }}. Region: {{ record.region|default:'not returned' }}. Size: {{ record.size|default:'not returned' }}. Nodes: {{ record.num_nodes|default:'not returned' }}. Storage MiB: {{ record.storage_size_mib|default:'not returned' }}. Private network: {{ record.private_network_uuid|default:'not returned' }}. Created: {{ record.created_at|default:'not returned' }}.",
+              "notes_template": "Provider status: {{ record.status|default:'unknown' }}. Engine version: {% if record.semantic_version %}{{ record.semantic_version }}{% else %}{{ record.version|default:'not returned' }}{% endif %}. Region: {{ record.region|default:'not returned' }}. Size: {{ record.size|default:'not returned' }}. Nodes: {% if record.num_nodes == None or record.num_nodes == '' %}not returned{% else %}{{ record.num_nodes }}{% endif %}. Storage MiB: {% if record.storage_size_mib == None or record.storage_size_mib == '' %}not returned{% else %}{{ record.storage_size_mib }}{% endif %}. Private network: {{ record.private_network_uuid|default:'not returned' }}. Created: {{ record.created_at|default:'not returned' }}.",
               "owner_user_id": "",
               "title_template": "DigitalOcean Database {{ record.name }}"
             },
-            "record_source": "filter_1.records",
+            "record_source": "get_1.records",
             "step_key": "route_1",
             "step_type": "destination_asset_create"
           }
@@ -100,9 +88,294 @@
           "mode": "manual"
         }
       },
-      "description": "Creates or reuses one Tenarie Asset for each online DigitalOcean managed database cluster while excluding connection material from worker output.",
+      "description": "Creates or updates an asset for each DigitalOcean managed database cluster, including clusters that are not currently active.",
+      "key": "database_inventory",
       "name": "DigitalOcean Database Inventory",
       "status": "active"
+    },
+    {
+      "definition_json": {
+        "connector": {
+          "config_id": "",
+          "family": ""
+        },
+        "steps": [
+          {
+            "auth_reference_id": "__use_default__",
+            "limits": {
+              "max_response_bytes": 1048576,
+              "timeout_seconds": 30
+            },
+            "normalization": {
+              "field_allowlist": [
+                "id",
+                "name"
+              ],
+              "field_mappings": [
+                {
+                  "output_field": "id",
+                  "source_path": "id"
+                }
+              ],
+              "mode": "records_contract_v1"
+            },
+            "output_alias": "get_1",
+            "request": {
+              "path": "/v2/databases",
+              "query_params": {}
+            },
+            "response_handling": {
+              "records_path": "databases"
+            },
+            "step_key": "get_1",
+            "step_type": "connector_get"
+          },
+          {
+            "auth_reference_id": "__use_default__",
+            "iteration": {
+              "mode": "for_each_record",
+              "preserved_parent_fields": [
+                "id",
+                "name"
+              ],
+              "records_source": "get_1.records"
+            },
+            "limits": {
+              "max_response_bytes": 1048576,
+              "timeout_seconds": 30
+            },
+            "normalization": {
+              "field_allowlist": [
+                "type",
+                "value"
+              ],
+              "field_mappings": [
+                {
+                  "output_field": "type",
+                  "source_path": "type"
+                },
+                {
+                  "output_field": "value",
+                  "source_path": "value"
+                }
+              ],
+              "mode": "records_contract_v1"
+            },
+            "output_alias": "get_2",
+            "request": {
+              "path": "/v2/databases/{{ record.id }}/firewall",
+              "query_params": {}
+            },
+            "response_handling": {
+              "records_path": "rules"
+            },
+            "step_key": "get_2",
+            "step_type": "connector_get"
+          },
+          {
+            "input_source": "get_2.records",
+            "match_policy": "all",
+            "output_alias": "filter_1",
+            "rules": [
+              {
+                "field": "type",
+                "operator": "equals",
+                "value": "ip_addr"
+              }
+            ],
+            "step_key": "filter_1",
+            "step_type": "filter_rule"
+          },
+          {
+            "input_source": "filter_1.records",
+            "match_policy": "any",
+            "output_alias": "filter_2",
+            "rules": [
+              {
+                "field": "value",
+                "operator": "equals",
+                "value": "0.0.0.0/0"
+              },
+              {
+                "field": "value",
+                "operator": "equals",
+                "value": "::/0"
+              }
+            ],
+            "step_key": "filter_2",
+            "step_type": "filter_rule"
+          },
+          {
+            "mapping": {
+              "control_test_alias": "database_public_source_restriction_result",
+              "control_test_code": "T-65",
+              "control_test_id": "00000000-0000-0000-0000-000000000000",
+              "data_source_label": "DigitalOcean explicit unrestricted database IP rules",
+              "evaluation_mode": "fail_when_records_present",
+              "notes": "This review identifies rules containing exactly 0.0.0.0/0 or ::/0. It does not assess combined address ranges, equivalent representations, default access, or actual network reachability. Keep it in draft until the intended databases are confirmed and missing or unknown access rules can be handled reliably."
+            },
+            "record_source": "filter_2.records",
+            "step_key": "result_1",
+            "step_type": "destination_control_test_result_add"
+          }
+        ],
+        "trigger": {
+          "mode": "manual"
+        }
+      },
+      "description": "Checks DigitalOcean managed database access rules for explicit unrestricted IPv4 or IPv6 sources.",
+      "key": "database_public_source_restriction_result",
+      "name": "DigitalOcean Explicit Public Database Rule Result",
+      "status": "draft"
+    },
+    {
+      "definition_json": {
+        "connector": {
+          "config_id": "",
+          "family": ""
+        },
+        "steps": [
+          {
+            "auth_reference_id": "__use_default__",
+            "limits": {
+              "max_response_bytes": 1048576,
+              "timeout_seconds": 30
+            },
+            "normalization": {
+              "field_allowlist": [
+                "id",
+                "name"
+              ],
+              "mode": "records_contract_v1"
+            },
+            "output_alias": "get_1",
+            "request": {
+              "path": "/v2/databases",
+              "query_params": {}
+            },
+            "response_handling": {
+              "records_path": "databases"
+            },
+            "step_key": "get_1",
+            "step_type": "connector_get"
+          },
+          {
+            "auth_reference_id": "__use_default__",
+            "iteration": {
+              "mode": "for_each_record",
+              "preserved_parent_fields": [
+                "id",
+                "name"
+              ],
+              "records_source": "get_1.records"
+            },
+            "limits": {
+              "max_response_bytes": 1048576,
+              "timeout_seconds": 30
+            },
+            "normalization": {
+              "field_allowlist": [
+                "uuid",
+                "cluster_uuid",
+                "type",
+                "value",
+                "description",
+                "created_at"
+              ],
+              "field_mappings": [
+                {
+                  "output_field": "uuid",
+                  "source_path": "uuid"
+                }
+              ],
+              "mode": "records_contract_v1"
+            },
+            "output_alias": "get_2",
+            "request": {
+              "path": "/v2/databases/{{ record.id }}/firewall",
+              "query_params": {}
+            },
+            "response_handling": {
+              "records_path": "rules"
+            },
+            "step_key": "get_2",
+            "step_type": "connector_get"
+          },
+          {
+            "input_source": "get_2.records",
+            "match_policy": "all",
+            "output_alias": "filter_1",
+            "rules": [
+              {
+                "field": "type",
+                "operator": "equals",
+                "value": "ip_addr"
+              }
+            ],
+            "step_key": "filter_1",
+            "step_type": "filter_rule"
+          },
+          {
+            "input_source": "filter_1.records",
+            "match_policy": "any",
+            "output_alias": "filter_2",
+            "rules": [
+              {
+                "field": "value",
+                "operator": "equals",
+                "value": "0.0.0.0/0"
+              },
+              {
+                "field": "value",
+                "operator": "equals",
+                "value": "::/0"
+              }
+            ],
+            "step_key": "filter_2",
+            "step_type": "filter_rule"
+          },
+          {
+            "input_source": "filter_2.records",
+            "match_policy": "all",
+            "output_alias": "filter_3",
+            "rules": [
+              {
+                "field": "uuid",
+                "operator": "exists",
+                "value": true
+              }
+            ],
+            "step_key": "filter_3",
+            "step_type": "filter_rule"
+          },
+          {
+            "mapping": {
+              "asset_alias_template": "{{ record.parent_context.id }}",
+              "business_impact_template": "",
+              "cve_id_template": "",
+              "cwe_id_template": "",
+              "description_template": "Database {{ record.parent_context.name }} ({{ record.parent_context.id }}) has trusted-source rule {{ record.uuid }} allowing {{ record.value }}. This is a configuration observation; actual reachability and compensating controls have not been tested.",
+              "external_id_template": "database:{{ record.parent_context.id }}:trusted-source:{{ record.uuid }}",
+              "external_system": "digital_ocean",
+              "name_template": "Unrestricted trusted source on DigitalOcean database {{ record.parent_context.name }}",
+              "owner_user_id": "",
+              "remediation_action_template": "Confirm whether the unrestricted source is approved. Replace it with the narrowest approved source and verify intended application connectivity before removing access.",
+              "source": "other",
+              "status": "open"
+            },
+            "record_source": "filter_3.records",
+            "step_key": "route_1",
+            "step_type": "destination_vulnerability_create"
+          }
+        ],
+        "trigger": {
+          "mode": "manual"
+        }
+      },
+      "description": "Creates or links configuration Vulnerabilities for unrestricted public database trusted-source rules. This records configuration, not verified network reachability.",
+      "key": "database_public_source_vulnerabilities",
+      "name": "DigitalOcean Public Database Source Vulnerabilities",
+      "status": "draft"
     },
     {
       "definition_json": {
@@ -216,6 +489,7 @@
         }
       },
       "description": "Creates tasks when a DigitalOcean managed database trusted-source rule allows all public IPv4 or IPv6 addresses.",
+      "key": "database_public_trusted_sources",
       "name": "DigitalOcean Database Public Trusted Sources Check",
       "status": "active"
     },
@@ -274,6 +548,7 @@
         }
       },
       "description": "Creates or reuses one Tenarie Asset for each standard DigitalOcean Droplet returned by the account.",
+      "key": "droplet_inventory",
       "name": "DigitalOcean Droplet Inventory",
       "status": "active"
     },
@@ -332,6 +607,7 @@
         }
       },
       "description": "Creates or reuses one Tenarie Asset for each DigitalOcean Cloud Firewall returned by the account.",
+      "key": "firewall_inventory",
       "name": "DigitalOcean Firewall Inventory",
       "status": "active"
     },
@@ -402,17 +678,22 @@
             "rules": [
               {
                 "field": "ports",
-                "operator": "contains",
+                "operator": "equals",
                 "value": "21"
               },
               {
                 "field": "ports",
-                "operator": "contains",
+                "operator": "equals",
                 "value": "23"
               },
               {
                 "field": "ports",
-                "operator": "contains",
+                "operator": "equals",
+                "value": "0"
+              },
+              {
+                "field": "ports",
+                "operator": "equals",
                 "value": "all"
               }
             ],
@@ -420,12 +701,26 @@
             "step_type": "filter_rule"
           },
           {
+            "input_source": "filter_2.records",
+            "match_policy": "all",
+            "output_alias": "filter_3",
+            "rules": [
+              {
+                "field": "protocol",
+                "operator": "equals",
+                "value": "tcp"
+              }
+            ],
+            "step_key": "filter_3",
+            "step_type": "filter_rule"
+          },
+          {
             "mapping": {
-              "additional_information_template": "Firewall {{ record.parent_context.name }} ({{ record.parent_context.id }}) currently allows public inbound access to {{ record.protocol|default:'unknown protocol' }} ports {{ record.ports }} from {{ record.sources.addresses|default:'unknown sources' }}. Review the inbound rule and remove FTP, Telnet, or unrestricted all-port exposure where it is not explicitly required.",
+              "additional_information_template": "Firewall {{ record.parent_context.name }} ({{ record.parent_context.id }}) allows public TCP inbound access with exact port value {{ record.ports }} from {{ record.sources.addresses }}. Values 0 and all represent all ports. Review whether this rule is approved and restrict it where required. This check does not evaluate ranges, UDP, host controls, or actual reachability.",
               "owner_user_id": "",
-              "task_title_template": "DigitalOcean firewall {{ record.parent_context.name }} exposes insecure ports {{ record.ports }}"
+              "task_title_template": "Review DigitalOcean firewall {{ record.parent_context.name }} public TCP ports {{ record.ports }}"
             },
-            "record_source": "filter_2.records",
+            "record_source": "filter_3.records",
             "step_key": "route_1",
             "step_type": "destination_task_create"
           }
@@ -434,7 +729,8 @@
           "mode": "manual"
         }
       },
-      "description": "Creates tasks when DigitalOcean firewall inbound rules expose FTP, Telnet, or all ports to the public internet.",
+      "description": "Creates review tasks for public TCP inbound rules with exact port values 21, 23, 0, or all. Ranges and UDP are not evaluated; an empty result is not proof of secure firewall configuration.",
+      "key": "insecure_firewall_ports",
       "name": "DigitalOcean Insecure Firewall Ports Check",
       "status": "active"
     },
@@ -509,6 +805,7 @@
         }
       },
       "description": "Creates tasks for DigitalOcean Load Balancers whose provider status is errored.",
+      "key": "load_balancer_errored",
       "name": "DigitalOcean Errored Load Balancers Check",
       "status": "active"
     },
@@ -622,6 +919,7 @@
         }
       },
       "description": "Creates advisory tasks when a DigitalOcean Load Balancer listens on HTTP port 80 without enabling the provider HTTP-to-HTTPS redirect.",
+      "key": "load_balancer_http_redirect_review",
       "name": "DigitalOcean Load Balancer HTTP Redirect Review",
       "status": "active"
     },
@@ -687,7 +985,7 @@
               "description_template": "DigitalOcean {{ record.type|default:'Load Balancer' }} {{ record.name }} ({{ record.id }}).",
               "external_id_template": "{{ record.id }}",
               "external_system": "digital_ocean",
-              "notes_template": "Provider status: {{ record.status|default:'not returned' }}. Network: {{ record.network|default:'not returned' }} / {{ record.network_stack|default:'not returned' }}. IPv4: {{ record.ip|default:'not returned' }}. IPv6: {{ record.ipv6|default:'not returned' }}. VPC: {{ record.vpc_uuid|default:'not returned' }}. Size units: {{ record.size_unit|default:'not returned' }}. Droplet targets: {{ record.droplet_ids|default:'none returned' }}. Tag target: {{ record.tag|default:'none returned' }}. Load Balancer targets: {{ record.target_load_balancer_ids|default:'none returned' }}. HTTP redirect: {{ record.redirect_http_to_https }}. TLS cipher policy: {{ record.tls_cipher_policy|default:'not returned' }}. Created: {{ record.created_at|default:'not returned' }}.",
+              "notes_template": "Provider status: {{ record.status|default:'not returned' }}. Network: {{ record.network|default:'not returned' }} / {{ record.network_stack|default:'not returned' }}. IPv4: {{ record.ip|default:'not returned' }}. IPv6: {{ record.ipv6|default:'not returned' }}. VPC: {{ record.vpc_uuid|default:'not returned' }}. Size units: {% if record.size_unit == None or record.size_unit == '' %}not returned{% else %}{{ record.size_unit }}{% endif %}. Droplet targets: {{ record.droplet_ids|default:'none returned' }}. Tag target: {{ record.tag|default:'none returned' }}. Load Balancer targets: {{ record.target_load_balancer_ids|default:'none returned' }}. HTTP redirect: {{ record.redirect_http_to_https }}. TLS cipher policy: {{ record.tls_cipher_policy|default:'not returned' }}. Created: {{ record.created_at|default:'not returned' }}.",
               "owner_user_id": "",
               "title_template": "DigitalOcean Load Balancer {{ record.name }}"
             },
@@ -701,6 +999,7 @@
         }
       },
       "description": "Creates or reuses one Tenarie Asset for each DigitalOcean Load Balancer while excluding certificate, domain, project, and firewall-address details.",
+      "key": "load_balancer_inventory",
       "name": "DigitalOcean Load Balancer Inventory",
       "status": "active"
     },
@@ -803,6 +1102,7 @@
         }
       },
       "description": "Creates tasks for DigitalOcean Load Balancers with no Droplet, tag, or Regional Load Balancer targets.",
+      "key": "load_balancer_without_targets",
       "name": "DigitalOcean Load Balancers Without Targets Check",
       "status": "active"
     },
@@ -872,6 +1172,7 @@
         }
       },
       "description": "Creates or reuses one Tenarie Asset for each DigitalOcean Monitoring alert policy while excluding notification recipients and integration details.",
+      "key": "monitoring_alert_policy_inventory",
       "name": "DigitalOcean Alert Policy Inventory",
       "status": "active"
     },
@@ -946,6 +1247,7 @@
         }
       },
       "description": "Creates tasks for DigitalOcean Monitoring alert policies that are disabled.",
+      "key": "monitoring_disabled_alert_policies",
       "name": "DigitalOcean Disabled Alert Policies Check",
       "status": "active"
     },
@@ -1034,6 +1336,7 @@
         }
       },
       "description": "Creates tasks for DigitalOcean Monitoring alert policies that have neither entity nor tag targets.",
+      "key": "monitoring_untargeted_alert_policies",
       "name": "DigitalOcean Untargeted Alert Policies Check",
       "status": "active"
     }
